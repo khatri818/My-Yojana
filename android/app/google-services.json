@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "213151631397",
+    "project_id": "myyojana-d0da4",
+    "storage_bucket": "myyojana-d0da4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:213151631397:android:06bb0865a97b69145597cc",
+        "android_client_info": {
+          "package_name": "com.example.my_yojana"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "213151631397-utvgrr4oinokj5dcvr2e5gna08eqf2eb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.my_yojana",
+            "certificate_hash": "70bb6b8a744e309fcd568e9d22cb53da5ee62f66"
+          }
+        },
+        {
+          "client_id": "213151631397-uqvifjfbv3jel3n66qe651ll6suaj3gp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEw9t4LgUTP99wdMic6-WhPSIqEob6GbI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "213151631397-uqvifjfbv3jel3n66qe651ll6suaj3gp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
