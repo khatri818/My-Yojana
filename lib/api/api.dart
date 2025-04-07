@@ -9,4 +9,5 @@ class Api {
   static const String register = user;
 
   static String getUser(String firebaseId) => '$user/$firebaseId';
+  static String getScheme = '$_baseUrl/schemes';
 }

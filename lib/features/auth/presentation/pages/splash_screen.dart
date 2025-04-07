@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../../../common/app_colors.dart';
 import '../../../../constant/image_resource.dart';
 import '../../../../core/utils/log_utility.dart';
+import '../../../home/presentation/manager/scheme_manger.dart';
 import '../../../home/presentation/pages/bottom_navigation_page.dart';
+import '../../../user/presentation/manager/user_manager.dart';
 import '../manager/auth_manger.dart';
 import 'login_page.dart';
 
@@ -29,8 +31,13 @@ class _SplashScreenState extends State<SplashScreen> {
     // Check user session
     if (mounted) {
       LogUtility.info('Inside Mounted');
+
       final authManager = context.read<AuthManager>();
+      final userManager = context.read<UserManager>();
+      final schemeManager = context.read<SchemeManager>();
+
       final userSession = await authManager.checkUser();
+
       if (!mounted) return;
       if (userSession != null) {
         if (userSession.isNewUser) {
@@ -39,6 +46,9 @@ class _SplashScreenState extends State<SplashScreen> {
           );
         } else {
           LogUtility.info('USER : THIS APP HAS A USER');
+          await userManager.getUser(userSession.token);
+          await schemeManager.getScheme();
+          if (!mounted) return;
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const BottomNav()),
           );

@@ -25,7 +25,7 @@ class _AppDrawerState extends State<AppDrawer> {
     return Drawer(
       child: Consumer<UserManager>(
         builder: (context, manager, child) {
-          if (manager.userLoadingStatus == Status.loading) {
+          if (manager.userLoadingStatus.loading) {
             return const Center(
               child: CircularProgressIndicator(),
             );

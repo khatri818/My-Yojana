@@ -15,15 +15,14 @@ class UserManager with ChangeNotifier {
   Status _userLoadingStatus = Status.loading;
   Status get userLoadingStatus => _userLoadingStatus;
 
-  void getUser(String firebaseId) async {
+  Future<void> getUser(String firebaseId) async {
     final results = await _getUserUseCase(firebaseId: firebaseId);
     results.fold((l) {
       _userLoadingStatus = Status.failure;
-      notifyListeners();
     }, (r) {
       user = r;
       _userLoadingStatus = Status.success;
-      notifyListeners();
     });
+    notifyListeners();
   }
 }

@@ -5,6 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
+import 'package:my_yojana/features/home/domain/use_cases/get_scheme_uecase.dart';
+import 'package:my_yojana/features/home/presentation/manager/scheme_manger.dart';
 import 'package:my_yojana/features/user/domain/repositories/user_repository.dart';
 import 'package:my_yojana/features/user/domain/usecases/get_user_usecase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +23,10 @@ import '../features/auth/domain/use_cases/login_user_usecase.dart';
 import '../features/auth/domain/use_cases/logout_usecase.dart';
 import '../features/auth/domain/use_cases/register_user_usecase.dart';
 import '../features/auth/presentation/manager/auth_manger.dart';
+import '../features/home/data/data_source/scheme_data_source.dart';
+import '../features/home/data/data_source/scheme_data_source_implementation.dart';
+import '../features/home/data/repositories/scheme_repository_implementation.dart';
+import '../features/home/domain/repositories/scheme_repository.dart';
 import '../features/user/data/datasources/user_data_source.dart';
 import '../features/user/data/datasources/user_data_source_implementation.dart';
 import '../features/user/data/repositories/user_repository_implementation.dart';
@@ -113,6 +119,19 @@ class Injection {
     getIt.registerLazySingleton<GetUserUseCase>(
             () => GetUserUseCase(getIt<UserRepository>()));
 
+    ///Scheme
+    //Data Source
+    getIt.registerLazySingleton<SchemeDataSource>(
+            () => SchemeDataSourceImplementation(getIt<AppHttp>()));
+
+    // Repository
+    getIt.registerLazySingleton<SchemeRepository>(
+            () => SchemeRepositoryImplementation(getIt<SchemeDataSource>()));
+
+    //Use cases
+    getIt.registerLazySingleton<GetSchemeUseCase>(
+            () => GetSchemeUseCase(getIt<SchemeRepository>()));
+
 
   }
 
@@ -130,6 +149,9 @@ class Injection {
 
   static UserManager get userManager =>
       UserManager(getUserUseCase: getIt<GetUserUseCase>());
+
+  static SchemeManager get schemeManager =>
+      SchemeManager(getSchemeUseCase: getIt<GetSchemeUseCase>());
 
   static init() async {
     await _initSystemSettings();

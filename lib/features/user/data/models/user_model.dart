@@ -61,16 +61,16 @@ class UserModel extends User {
       dob: map['dob'] ?? '',
       gender: map['gender'] as String?, // Directly using it as String
       occupation: map['occupation'],
-      maritalStatus: map['maritalStatus'],
+      maritalStatus: map['marital_status'],
       city: map['city'],
-      residenceType: map['residenceType'],
+      residenceType: map['residence_type'],
       category: map['category'],
-      differentlyAbled: map['differentlyAbled'],
-      disabilityPercentage: (map['disabilityPercentage'] as num?)?.toDouble(),
+      differentlyAbled: map['differently_abled'],
+      disabilityPercentage: (map['disability_percentage'] as num?)?.toDouble(),
       minority: map['minority'],
-      bplCategory: map['bplCategory'],
+      bplCategory: map['bpl_category'],
       income: (map['income'] as num?)?.toDouble(),
-      educationLevel: map['educationLevel'],
+      educationLevel: map['education_level'],
       preferredLanguage: map['preferredLanguage'] ?? 'en',
     );
   }

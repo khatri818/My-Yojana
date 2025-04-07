@@ -4,7 +4,14 @@ import 'package:my_yojana/common/app_colors.dart';
 import 'package:my_yojana/features/home/presentation/pages/scheme_screen.dart';
 import 'package:my_yojana/features/home/presentation/pages/search_screen.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final List<Map<String, String>> carouselItems = [
     {
       'title': 'Mahatma Jyotirao Phule Jan Arogya Yojana',
@@ -35,7 +42,6 @@ class HomePage extends StatelessWidget {
     {'icon': Icons.house, 'label': 'HOUSING'},
   ];
 
-  HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
