@@ -153,7 +153,7 @@ class _HomePageState extends State<HomePage> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const SearchPage()),
+                          MaterialPageRoute(builder: (context) => const SearchPage(isMatchScheme: false)),
                         );
                       },
                       child: const Row(
@@ -169,7 +169,12 @@ class _HomePageState extends State<HomePage> {
                     ),
                     GestureDetector(
                       onTap: () {
-
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SearchPage(isMatchScheme: true),
+                          ),
+                        );
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
