@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:my_yojana/common/app_colors.dart';
 import '../../../../core/enum/status.dart';
 import '../../../user/presentation/manager/user_manager.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../manager/scheme_manger.dart';
 
 class SearchPage extends StatefulWidget {
@@ -18,6 +19,8 @@ class _SearchPageState extends State<SearchPage> {
 
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isListening = false;
 
   @override
   void initState() {
@@ -116,6 +119,32 @@ class _SearchPageState extends State<SearchPage> {
     _dobController.text = user.dob ?? '';
 
     _isDataPrefilled = true;
+  }
+
+  void _startListening() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done') {
+          setState(() => _isListening = false);
+          _speech.stop();
+        }
+      },
+      onError: (error) {
+        setState(() => _isListening = false);
+      },
+    );
+
+    if (available) {
+      setState(() => _isListening = true);
+      _speech.listen(
+        onResult: (result) {
+          setState(() {
+            _searchController.text = result.recognizedWords;
+          });
+          _onSearch(result.recognizedWords);
+        },
+      );
+    }
   }
 
   void _showFilterOptions(BuildContext context) {
@@ -297,8 +326,7 @@ class _SearchPageState extends State<SearchPage> {
       ),
       body: Consumer<UserManager>(
         builder: (context, manager, _) {
-          if (widget.isMatchScheme &&
-              manager.userLoadingStatus == Status.loading) {
+          if (widget.isMatchScheme && manager.userLoadingStatus.loading) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -314,8 +342,6 @@ class _SearchPageState extends State<SearchPage> {
               child: Row(
                 children: [
                   const SizedBox(width: 10),
-
-                  // FIX: `Expanded` should not be inside a `const`
                   Expanded(
                     child: TextField(
                       controller: _searchController,
@@ -323,28 +349,36 @@ class _SearchPageState extends State<SearchPage> {
                       decoration: InputDecoration(
                         hintText: 'Enter Scheme Name to Search...',
                         prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                          icon: const Icon(Icons.clear, color: Colors.grey),
-                          onPressed: () {
-                            setState(() {
-                              _searchController.clear();
-                            });
-                            _onSearch('');
-                          },
-                        )
-                            : null,
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_searchController.text.isNotEmpty)
+                              IconButton(
+                                icon: const Icon(Icons.clear, color: Colors.grey),
+                                onPressed: () {
+                                  setState(() {
+                                    _searchController.clear();
+                                  });
+                                  _onSearch('');
+                                },
+                              ),
+                            IconButton(
+                              icon: Icon(
+                                _isListening ? Icons.mic : Icons.mic_none,
+                                color: _isListening ? Colors.red : Colors.grey,
+                              ),
+                              onPressed: _startListening,
+                            ),
+                          ],
+                        ),
                         border: InputBorder.none,
-                        contentPadding:
-                        const EdgeInsets.symmetric(vertical: 15.0),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 15.0),
                       ),
                       onChanged: _onSearch,
                     ),
                   ),
-
                   IconButton(
-                    icon: const Icon(Icons.tune_sharp,
-                        color: AppColors.backgroundColor),
+                    icon: const Icon(Icons.tune_sharp, color: AppColors.backgroundColor),
                     onPressed: () => _showFilterOptions(context),
                   ),
                 ],

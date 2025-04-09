@@ -1,38 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:my_yojana/core/enum/status.dart';
 import 'package:provider/provider.dart';
-import '../../../../common/app_colors.dart';
-import '../../../../core/constant/app_styles.dart';
-import '../../../../core/constant/app_text_styles.dart';
 import '../../../../core/utils/app_utils.dart';
 import '../manager/user_manager.dart';
 
-class UserPage extends StatefulWidget {
+class UserPage extends StatelessWidget {
   const UserPage({super.key});
 
   @override
-  State<UserPage> createState() => _UserPageState();
-}
-
-class _UserPageState extends State<UserPage> {
-  @override
   Widget build(BuildContext context) {
+    final topPadding = MediaQuery.of(context).padding.top;
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+      backgroundColor: Colors.white,
       body: Consumer<UserManager>(
         builder: (context, manager, child) {
           if (manager.userLoadingStatus == Status.loading) {
@@ -44,89 +24,107 @@ class _UserPageState extends State<UserPage> {
             return const Center(child: Text("Something went wrong!"));
           }
 
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Column(
-                      children: [
-                        Stack(
-                          alignment: Alignment.center,
+          return SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                // Header with image and curved corners
+                Container(
+                  padding: EdgeInsets.only(top: topPadding + 10),
+                  height: 250,
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/profile_background.png'),
+                      fit: BoxFit.cover,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 0,
+                        left: 8,
+                        child: IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             CircleAvatar(
-                              radius: 50,
-                              backgroundColor: AppColors.orange,
+                              radius: 45,
+                              backgroundColor: Colors.white,
                               child: Text(
                                 AppUtils.getInitials(user.name ?? ''),
-                                style: AppTextStyle.title2.copyWith(
-                                  color: AppColors.white,
-                                  fontSize: 30,
+                                style: const TextStyle(
+                                  color: Color(0xFF3A5AFE),
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                            Positioned(
-                              bottom: 0,
-                              right: 4,
-                              child: GestureDetector(
-                                onTap: () {
-                                  // Navigator.push(
-                                  //   context,
-                                  //   // MaterialPageRoute(
-                                  //   //  // builder: (_) => const EditProfilePage(),
-                                  //   // ),
-                                  // );
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: AppColors.backgroundColor,
-                                    border: Border.all(color: Colors.white, width: 2),
-                                  ),
-                                  child: const Icon(
-                                    Icons.edit,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                            const SizedBox(height: 10),
+                            Text(
+                              user.name ?? '-',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          user.name ?? '-',
-                          style: AppTextStyle.title2.copyWith(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // User Information Sections
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(top: 16, bottom: 30),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle("Personal Information"),
+                        _buildInfoRow(Icons.cake, 'Date of Birth', user.dob),
+                        _buildInfoRow(Icons.wc, 'Gender', user.gender),
+                        _buildInfoRow(Icons.favorite, 'Marital Status', user.maritalStatus),
+                        _buildInfoRow(Icons.school, 'Education Level', user.educationLevel),
+                        _buildInfoRow(Icons.work, 'Occupation', user.occupation),
+
+                        const Divider(height: 30, thickness: 1),
+
+                        _buildSectionTitle("Location & Housing"),
+                        _buildInfoRow(Icons.location_city, 'City', user.city),
+                        _buildInfoRow(Icons.home, 'Residence Type', user.residenceType),
+
+                        const Divider(height: 30, thickness: 1),
+
+                        _buildSectionTitle("Financial & Social Info"),
+                        _buildInfoRow(Icons.currency_rupee, 'Income', user.income?.toString()),
+                        _buildInfoRow(
+                          Icons.percent,
+                          'Disability %',
+                          user.disabilityPercentage != null ? '${user.disabilityPercentage}%' : null,
                         ),
+                        _buildInfoRow(Icons.category, 'Minority', user.minority == true ? 'Yes' : 'No'),
+                        _buildInfoRow(Icons.accessibility_new, 'Differently Abled',
+                            user.differentlyAbled == true ? 'Yes' : 'No'),
+                        _buildInfoRow(Icons.family_restroom, 'BPL Category',
+                            user.bplCategory == true ? 'Yes' : 'No'),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
-                  _buildProfileCard('Date of Birth', user.dob),
-                  _buildProfileCard('Gender', user.gender),
-                  _buildProfileCard('Marital Status', user.maritalStatus),
-                  _buildProfileCard('Education Level', user.educationLevel),
-                  _buildProfileCard('Occupation', user.occupation),
-                  _buildProfileCard('City', user.city),
-                  _buildProfileCard('Residence Type', user.residenceType),
-                  _buildProfileCard('Income', user.income?.toString()),
-                  _buildProfileSwitch('Minority', user.minority ?? false),
-                  _buildProfileSwitch('Differently Abled', user.differentlyAbled ?? false),
-                  _buildProfileCard(
-                    'Disability %',
-                    user.disabilityPercentage != null
-                        ? '${user.disabilityPercentage}%'
-                        : null,
-                  ),
-                  _buildProfileSwitch('BPL Category', user.bplCategory ?? false)
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },
@@ -134,46 +132,45 @@ class _UserPageState extends State<UserPage> {
     );
   }
 
-  Widget _buildProfileCard(String label, String? value) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(label, style: AppTextStyle.text.copyWith(fontWeight: FontWeight.w600)),
-            ),
-            Text(value ?? '-', style: AppTextStyle.text),
-          ],
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
         ),
       ),
     );
   }
 
-  Widget _buildProfileSwitch(String label, bool value) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(child: Text(label, style: AppTextStyle.text.copyWith(fontWeight: FontWeight.w600))),
-            IgnorePointer(
-              ignoring: true,
-              child: Switch(
-                value: value,
-                onChanged: (_) {},
-                activeColor: AppColors.backgroundColor,
-              ),
+  Widget _buildInfoRow(IconData icon, String title, String? data) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Colors.black54),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  data ?? '-',
+                  style: const TextStyle(color: Colors.black87),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
