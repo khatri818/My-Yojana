@@ -70,7 +70,7 @@ class AppHttpImpl extends AppHttp {
     required String path,
     Object? data,
     Options? options,
-    bool withOutToken = false,
+    bool withOutToken = true,
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
@@ -184,7 +184,7 @@ class AppHttpImpl extends AppHttp {
       {required String path,
       Object? data,
       Options? options,
-      bool defaultHeader = false,
+      bool defaultHeader = true,
       Map<String, dynamic>? queryParameters}) async {
     try {
       //LogUtility.customLog(path, name: "API");

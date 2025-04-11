@@ -48,26 +48,26 @@ class UserDataSourceImplementation implements UserDataSource {
     try {
       final response = await _http.delete(path: Api.deleteUser(firebaseId));
 
-      return response.fold((l) {
-        return Left(ErrorMessage(message: l.message));
-      }, (result) async {
-        final statusCode = result.statusCode;
-        final data = result.data;
+      return response.fold(
+            (l) => Left(ErrorMessage(message: l.message)),
+            (result) async {
+          final statusCode = result.statusCode;
+          final data = result.data;
 
-        if (statusCode == null || statusCode >= 400) {
-          return Left(ErrorMessage(
-              message: data['error'] ?? 'Failed to delete user.'));
-        }
+          if (statusCode == null || statusCode >= 400) {
+            // Safely check if data is a Map and contains 'error'
+            final errorMsg = (data is Map && data.containsKey('error'))
+                ? data['error']
+                : 'Failed to delete user.';
+            return Left(ErrorMessage(message: errorMsg));
+          }
 
-        return const Right(null);
-      });
-    } catch (e) {
-      LogUtility.error('Delete User Error : $e');
-      return Left(
-        ErrorMessage(
-          message: e.toString(),
-        ),
+          return const Right(null); // success, no data to return
+        },
       );
+    } catch (e, stackTrace) {
+      LogUtility.error('Delete User Error : $e\n$stackTrace');
+      return Left(ErrorMessage(message: 'Unexpected error occurred.'));
     }
   }
 

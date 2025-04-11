@@ -31,7 +31,6 @@ class UserPage extends StatelessWidget {
               children: [
                 Column(
                   children: [
-                    // 🖼️ Header with background image and overlay
                     Container(
                       height: 250,
                       width: double.infinity,
@@ -86,7 +85,6 @@ class UserPage extends StatelessWidget {
                       ),
                     ),
 
-                    // 📋 User Details
                     Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(20),
@@ -110,11 +108,11 @@ class UserPage extends StatelessWidget {
 
                             _buildSectionTitle("Financial & Social Info"),
                             _buildInfoCard([
-                              _buildInfoRow(Icons.currency_rupee, 'Income', user.income?.toString()),
-                              _buildInfoRow(Icons.percent, 'Disability %', user.disabilityPercentage != null ? '${user.disabilityPercentage}%' : null),
-                              _buildInfoRow(Icons.category, 'Minority', user.minority == true ? 'Yes' : 'No'),
-                              _buildInfoRow(Icons.accessibility_new, 'Differently Abled', user.differentlyAbled == true ? 'Yes' : 'No'),
-                              _buildInfoRow(Icons.family_restroom, 'BPL Category', user.bplCategory == true ? 'Yes' : 'No'),
+                              _buildSliderRow(context, user.disabilityPercentage),
+                              _buildToggleTile(Icons.category, 'Minority', user.minority == true),
+                              _buildToggleTile(Icons.accessibility_new, 'Differently Abled', user.differentlyAbled == true),
+                              _buildToggleTile(Icons.family_restroom, 'BPL Category', user.bplCategory == true),
+                              _buildInfoRow(Icons.currency_rupee, 'Annual Income', user.income?.toString()),
                             ]),
                           ],
                         ),
@@ -131,14 +129,12 @@ class UserPage extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  top: 220,
+                  top: 255,
                   right: 20,
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-                      ),
+                      color: const Color(0xFF2575FC),
                     ),
                     child: ElevatedButton.icon(
                       onPressed: () {
@@ -227,6 +223,76 @@ class UserPage extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliderRow(BuildContext context, double? percentage) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.percent, color: Color(0xFF2575FC), size: 22),
+              SizedBox(width: 14),
+              Text(
+                'Disability Percentage',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: const Color(0xFF2575FC),
+              inactiveTrackColor: Colors.grey[300],
+              thumbShape: SliderComponentShape.noThumb,
+              overlayShape: SliderComponentShape.noOverlay,
+            ),
+            child: Slider(
+              value: (percentage ?? 0).toDouble(),
+              min: 0,
+              max: 100,
+              onChanged: null,
+            ),
+          ),
+          Text(
+            '${percentage ?? 0}%',
+            style: const TextStyle(fontSize: 14, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleTile(IconData icon, String title, bool value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF2575FC), size: 22),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            onChanged: null,
           ),
         ],
       ),
