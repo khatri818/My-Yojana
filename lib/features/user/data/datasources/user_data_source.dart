@@ -6,7 +6,6 @@ abstract class UserDataSource {
    /// Fetches user details based on Firebase ID
    AppTypeResponse<User> getUser({required String firebaseId});
    AppTypeResponse<void> deleteUser({required String firebaseId});
-
-   /// Adds a new user with the provided sign-up form data
+   AppSuccessResponse updateUser({required String firebaseId,required UserSignUpForm userSignUpForm});
    AppSuccessResponse addNewUser({required UserSignUpForm userSignUpForm});
 }

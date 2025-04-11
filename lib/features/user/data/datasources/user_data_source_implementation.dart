@@ -101,4 +101,40 @@ class UserDataSourceImplementation implements UserDataSource {
       );
     }
   }
+
+  @override
+  AppSuccessResponse updateUser({
+    required String firebaseId,
+    required UserSignUpForm userSignUpForm,
+  }) async {
+    try {
+      final body = userSignUpForm.toMap();
+      LogUtility.info('Update User [$firebaseId] with body: $body');
+
+      final response = await _http.put(
+        path: Api.updateUser(firebaseId),
+        data: body,
+      );
+
+      return response.fold(
+            (l) => Left(ErrorMessage(message: l.message)),
+            (result) async {
+          final statusCode = result.statusCode;
+          final data = result.data;
+
+          if (statusCode == null || statusCode >= 400) {
+            return Left(ErrorMessage(
+                message: data['error'] ?? 'Failed to update user.'));
+          }
+
+          return Right(SuccessMessage(
+              message: data['message'] ?? 'User updated successfully.'));
+        },
+      );
+    } catch (e, stackTrace) {
+      LogUtility.error('Update User Error : $e\n$stackTrace');
+      return const Left(ErrorMessage(message: 'Unexpected error occurred.'));
+    }
+  }
+
 }
