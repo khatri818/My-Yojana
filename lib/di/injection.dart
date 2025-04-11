@@ -5,9 +5,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
+import 'package:http/http.dart';
 import 'package:my_yojana/features/home/domain/use_cases/get_scheme_uecase.dart';
 import 'package:my_yojana/features/home/presentation/manager/scheme_manger.dart';
 import 'package:my_yojana/features/user/domain/repositories/user_repository.dart';
+import 'package:my_yojana/features/user/domain/usecases/delete_user_usecase.dart';
 import 'package:my_yojana/features/user/domain/usecases/get_user_usecase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/services/firebase_auth_service.dart';
@@ -119,6 +121,9 @@ class Injection {
     getIt.registerLazySingleton<GetUserUseCase>(
             () => GetUserUseCase(getIt<UserRepository>()));
 
+    getIt.registerLazySingleton<DeleteUserUseCase>(
+        () => DeleteUserUseCase(getIt<UserRepository>()));
+
     ///Scheme
     //Data Source
     getIt.registerLazySingleton<SchemeDataSource>(
@@ -148,7 +153,8 @@ class Injection {
   );
 
   static UserManager get userManager =>
-      UserManager(getUserUseCase: getIt<GetUserUseCase>());
+      UserManager(getUserUseCase: getIt<GetUserUseCase>(),
+      deleteUserUseCase: getIt<DeleteUserUseCase>());
 
   static SchemeManager get schemeManager =>
       SchemeManager(getSchemeUseCase: getIt<GetSchemeUseCase>());

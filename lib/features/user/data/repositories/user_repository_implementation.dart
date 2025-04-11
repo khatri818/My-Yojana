@@ -14,6 +14,10 @@ class UserRepositoryImplementation implements UserRepository {
       _userDataSource.getUser(firebaseId: firebaseId);
 
   @override
+  AppTypeResponse<void> deleteUser({required String firebaseId}) async =>
+      _userDataSource.deleteUser(firebaseId: firebaseId);
+
+  @override
   AppSuccessResponse addNewUser({required UserSignUpForm userSignUpForm}) =>
       _userDataSource.addNewUser(userSignUpForm: userSignUpForm);
 }

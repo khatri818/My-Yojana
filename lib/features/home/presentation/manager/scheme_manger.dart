@@ -60,23 +60,41 @@ class SchemeManager with ChangeNotifier {
   Future<void> getScheme({bool showLoading = false}) async {
     _setLoadingStatus(showLoading);
     notifyListeners();
-    final results = await _getSchemeUseCase(page: _page,
-        category: _category,
-        gender: _gender,
-        city: _city,
-        income_max: _income_max,
-        differently_abled: _differently_abled,
-        minority: _minority,
-        bpl_category: _bpl_category);
+
+    final results = await _getSchemeUseCase(
+      page: _page,
+      category: _category,
+      gender: _gender,
+      city: _city,
+      income_max: _income_max,
+      differently_abled: _differently_abled,
+      minority: _minority,
+      bpl_category: _bpl_category,
+    );
+
     results.fold((l) {
-      _schemeLoadingStatus = Status.failure;
-      notifyListeners();
+      _handleFailure();
     }, (r) {
-      scheme = r;
+      if (_page == 1) {
+        scheme = r;
+      } else {
+        scheme?.addAll(r);
+      }
+
+      if (r.isNotEmpty) {
+        _page += 1;
+      }
+
+      if (r.length < 10) {
+        _hasMoreData = false;
+      }
+
       _schemeLoadingStatus = Status.success;
+      _schemePaginationLoadingStatus = Status.success;
       notifyListeners();
     });
   }
+
 
   void setFilter(category, gender, city, income_max, differently_abled, minority, bpl_category) {
     resetState();

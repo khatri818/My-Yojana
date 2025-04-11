@@ -44,6 +44,34 @@ class UserDataSourceImplementation implements UserDataSource {
   }
 
   @override
+  AppTypeResponse<void> deleteUser({required String firebaseId}) async {
+    try {
+      final response = await _http.delete(path: Api.deleteUser(firebaseId));
+
+      return response.fold((l) {
+        return Left(ErrorMessage(message: l.message));
+      }, (result) async {
+        final statusCode = result.statusCode;
+        final data = result.data;
+
+        if (statusCode == null || statusCode >= 400) {
+          return Left(ErrorMessage(
+              message: data['error'] ?? 'Failed to delete user.'));
+        }
+
+        return const Right(null);
+      });
+    } catch (e) {
+      LogUtility.error('Delete User Error : $e');
+      return Left(
+        ErrorMessage(
+          message: e.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
   AppSuccessResponse addNewUser({required UserSignUpForm userSignUpForm}) async {
     try {
       final body = userSignUpForm.toMap();

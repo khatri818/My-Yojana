@@ -3,12 +3,17 @@ import 'package:my_yojana/features/user/presentation/pages/user_page.dart';
 import '../../domain/usecases/get_user_usecase.dart';
 import '../../../../core/enum/status.dart';
 import '../../domain/entities/user.dart';
+import '../../domain/usecases/delete_user_usecase.dart';
 
 class UserManager with ChangeNotifier {
   final GetUserUseCase _getUserUseCase;
+  final DeleteUserUseCase _deleteUserUseCase;
 
-  UserManager({required GetUserUseCase getUserUseCase})
-      : _getUserUseCase = getUserUseCase;
+  UserManager({
+    required GetUserUseCase getUserUseCase,
+    required DeleteUserUseCase deleteUserUseCase,
+  })  : _getUserUseCase = getUserUseCase,
+        _deleteUserUseCase = deleteUserUseCase;
 
   User? user;
 
@@ -24,5 +29,10 @@ class UserManager with ChangeNotifier {
       _userLoadingStatus = Status.success;
     });
     notifyListeners();
+  }
+
+  Future<bool> deleteUser(String firebaseId) async {
+    final result = await _deleteUserUseCase(firebaseId: firebaseId);
+    return result.fold((l) => false, (r) => true);
   }
 }
