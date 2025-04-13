@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 class User extends Equatable {
   final String? firebaseUid;
+  final int? id;
   final String? name;
   final String? dob;
   final String? gender;
@@ -19,6 +20,7 @@ class User extends Equatable {
 
   const User({
     this.firebaseUid,
+    this.id,
     this.name,
     this.dob,
     this.gender,
@@ -39,6 +41,7 @@ class User extends Equatable {
   @override
   List<Object?> get props => [
     firebaseUid,
+    id,
     name,
     dob,
     gender,

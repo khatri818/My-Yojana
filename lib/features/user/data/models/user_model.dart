@@ -3,6 +3,7 @@ import '../../domain/entities/user.dart';
 class UserModel extends User {
   const UserModel({
     super.firebaseUid,
+    super.id,
     super.name,
     super.dob,
     super.gender,
@@ -36,6 +37,7 @@ class UserModel extends User {
   Map<String, dynamic> toJson() {
     return {
       'firebaseUid': firebaseUid,
+      'id': id,
       'name': name,
       'dob': dob,
       'gender': gender, // Now directly a String
@@ -57,6 +59,7 @@ class UserModel extends User {
   factory UserModel.fromJson(Map<String, dynamic> map) {
     return UserModel(
       firebaseUid: map['firebaseUid'] ?? '',
+      id: map['id'],
       name: map['name'] ?? '',
       dob: map['dob'] ?? '',
       gender: map['gender'] as String?, // Directly using it as String

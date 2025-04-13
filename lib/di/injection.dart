@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart';
+import 'package:my_yojana/features/home/domain/use_cases/create_bookmark_usecase.dart';
+import 'package:my_yojana/features/home/domain/use_cases/get_scheme_id_usecase.dart';
 import 'package:my_yojana/features/home/domain/use_cases/get_scheme_uecase.dart';
 import 'package:my_yojana/features/home/presentation/manager/scheme_manger.dart';
 import 'package:my_yojana/features/user/domain/repositories/user_repository.dart';
@@ -30,6 +32,7 @@ import '../features/home/data/data_source/scheme_data_source.dart';
 import '../features/home/data/data_source/scheme_data_source_implementation.dart';
 import '../features/home/data/repositories/scheme_repository_implementation.dart';
 import '../features/home/domain/repositories/scheme_repository.dart';
+import '../features/home/domain/use_cases/rate_scheme_usecase.dart';
 import '../features/user/data/datasources/user_data_source.dart';
 import '../features/user/data/datasources/user_data_source_implementation.dart';
 import '../features/user/data/repositories/user_repository_implementation.dart';
@@ -141,6 +144,18 @@ class Injection {
     getIt.registerLazySingleton<GetSchemeUseCase>(
             () => GetSchemeUseCase(getIt<SchemeRepository>()));
 
+    getIt.registerLazySingleton<GetSchemeIdUseCase>(
+        () => GetSchemeIdUseCase(getIt<SchemeRepository>()));
+
+    getIt.registerLazySingleton<RateSchemeUseCase>(
+        () => RateSchemeUseCase(getIt<SchemeRepository>())
+    );
+
+    getIt.registerLazySingleton<CreateBookmarkUseCase>(
+            () => CreateBookmarkUseCase(getIt<SchemeRepository>())
+    );
+
+
 
   }
 
@@ -162,7 +177,10 @@ class Injection {
       updateUserUseCase: getIt<UpdateUserUseCase>());
 
   static SchemeManager get schemeManager =>
-      SchemeManager(getSchemeUseCase: getIt<GetSchemeUseCase>());
+      SchemeManager(getSchemeUseCase: getIt<GetSchemeUseCase>(),
+      getSchemeIdUseCase: getIt<GetSchemeIdUseCase>(),
+        rateSchemeUseCase: getIt<RateSchemeUseCase>(),
+        createBookmarkUseCase: getIt<CreateBookmarkUseCase>(),);
 
   static init() async {
     await _initSystemSettings();

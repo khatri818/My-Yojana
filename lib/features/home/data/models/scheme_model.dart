@@ -27,6 +27,10 @@ class SchemeModel extends Scheme {
     this.localBody,
     this.educationCriteria,
     this.keywords,
+    this.averagerating,
+    this.totalrating,
+    this.isBookmarked,
+    this.userRating
   });
 
   final int? id;
@@ -54,36 +58,46 @@ class SchemeModel extends Scheme {
   final String? localBody;
   final String? educationCriteria;
   final List<String>? keywords;
+  final double? averagerating;
+  final int? totalrating;
+  final int? isBookmarked;
+  final double? userRating;
 
   factory SchemeModel.fromJson(Map<String, dynamic> map) {
     return SchemeModel(
       id: map['id'] as int?,
-      schemeName: map['scheme_name'],
-      category: map['category'],
-      description: map['description'],
-      launchDate: map['launch_date'],
-      expiryDate: map['expiry_date'],
-      ageRange: map['age_range'],
-      income: (map['income'] as num?)?.toDouble(),
-      occupation: map['occupation'],
-      residenceType: map['residence_type'],
-      city: map['city'],
-      gender: map['gender'],
-      caste: map['caste'],
-      benefitType: map['benefit_type'],
-      differentlyAbled: map['differently_abled'],
-      maritalStatus: map['marital_status'],
-      disabilityPercentage: (map['disability_percentage'] as num?)?.toDouble(),
-      minority: map['minority'],
-      bplCategory: map['bpl_category'],
-      department: map['department'],
-      applicationLink: map['application_link'],
-      schemeDetails: map['scheme_details'],
-      localBody: map['local_body'],
-      educationCriteria: map['education_criteria'],
-      keywords: (map['keywords'] as List<dynamic>?)
-          ?.map((e) => e.toString())
-          .toList(),
+      schemeName: map['scheme_name']?.toString(),
+      category: map['category']?.toString(),
+      description: map['description']?.toString(),
+      launchDate: map['launch_date']?.toString(),
+      expiryDate: map['expiry_date']?.toString(),
+      ageRange: map['age_range']?.toString(),
+      income: (map['income'] is num) ? (map['income'] as num).toDouble() : null,
+      occupation: map['occupation']?.toString(),
+      residenceType: map['residence_type']?.toString(),
+      city: map['city']?.toString(),
+      gender: map['gender']?.toString(),
+      caste: map['caste']?.toString(),
+      benefitType: map['benefit_type']?.toString(),
+      differentlyAbled: map['differently_abled'] as bool?,
+      maritalStatus: map['marital_status']?.toString(),
+      disabilityPercentage: (map['disability_percentage'] is num)
+          ? (map['disability_percentage'] as num).toDouble()
+          : null,
+      minority: map['minority'] as bool?,
+      bplCategory: map['bpl_category'] as bool?,
+      department: map['department']?.toString(),
+      applicationLink: map['application_link']?.toString(),
+      schemeDetails: map['scheme_details']?.toString(), // important fix
+      localBody: map['local_body']?.toString(),
+      educationCriteria: map['education_criteria']?.toString(),
+      keywords: (map['keywords'] is List)
+          ? List<String>.from(map['keywords'].map((e) => e.toString()))
+          : null,
+      averagerating: map['average_rating'],
+      totalrating: map['total_ratings'],
+      isBookmarked: map['isBookmarked'],
+      userRating: map['user_rating'],
     );
   }
 
@@ -114,6 +128,10 @@ class SchemeModel extends Scheme {
       'local_body': localBody,
       'education_criteria': educationCriteria,
       'keywords': keywords,
+      'average_rating': averagerating,
+      'total_ratings': totalrating,
+      'isBookmarked': isBookmarked,
+      'user_rating': userRating,
     };
   }
 }

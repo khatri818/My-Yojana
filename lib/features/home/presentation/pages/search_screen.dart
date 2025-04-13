@@ -1,7 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
-import 'package:my_yojana/common/app_colors.dart';
 import '../../../../core/enum/status.dart';
 import '../../../user/presentation/manager/user_manager.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -10,7 +11,6 @@ import '../widgets/scheme_item.dart';
 
 class SearchPage extends StatefulWidget {
   final bool isMatchScheme;
-
   const SearchPage({super.key, required this.isMatchScheme});
 
   @override
@@ -32,29 +32,57 @@ class _SearchPageState extends State<SearchPage> {
   bool _selectedBplOption = false;
   String? _selectedResidenceType;
 
+  bool _isMatchProfileEnabled = false; // ✅ Persistent state
+
   final TextEditingController _occupationController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _incomeController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
 
   final List<String> _schemeCategories = [
-    'Education', 'Scholarship', 'Hospital', 'Agriculture', 'Insurance', 'Housing', 'Fund support'
+    'Education',
+    'Scholarship',
+    'Hospital',
+    'Agriculture',
+    'Insurance',
+    'Housing',
+    'Fund support'
   ];
-  final List<String> _eduCategories = ['Below 10th', 'Graduation', 'Above Graduation'];
+  final List<String> _eduCategories = [
+    'Below 10th',
+    'Graduation',
+    'Above Graduation'
+  ];
   final List<String> _genders = ['male', 'female', 'other'];
   final List<String> _maritalStatus = ['single', 'married', 'widowed'];
-  final List<String> _residenceTypes = ['rural', 'urban', 'semi-urban'];
-
-  bool _isDataPrefilled = false;
+  final List<String> _residenceTypes = ['Rural', 'Urban', 'Semi-Urban'];
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+
+    final userManager = context.read<UserManager>();
+    final schemeManager = context.read<SchemeManager>();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SchemeManager>().getScheme(showLoading: true);
+
+
+      if (widget.isMatchScheme) {
+        setState(() {
+          _isMatchProfileEnabled = true;
+        });
+        _prefillUserData(userManager);
+        _onFilter();
+      } else {
+        schemeManager.resetState();
+        _clearFilters();
+        schemeManager.getScheme(showLoading: true);
+      }
     });
   }
+
+
 
   @override
   void dispose() {
@@ -65,29 +93,6 @@ class _SearchPageState extends State<SearchPage> {
     _incomeController.dispose();
     _dobController.dispose();
     super.dispose();
-  }
-
-  void _prefillUserData(UserManager manager) {
-    if (_isDataPrefilled || manager.user == null) return;
-
-    final user = manager.user!;
-    _selectedGender = user.gender;
-    _selectedCategory = user.category;
-    _selectedEduCategory = user.educationLevel;
-    _selectedMaritalStatus = user.maritalStatus;
-    _selectedResidenceType = user.residenceType;
-
-    _selectedMinorityOption = user.minority ?? false;
-    _selectedDisableOption = user.differentlyAbled ?? false;
-    _selectedBplOption = user.bplCategory ?? false;
-
-    _occupationController.text = user.occupation ?? '';
-    _cityController.text = user.city ?? '';
-    _incomeController.text = user.income?.toString() ?? '';
-    _dobController.text = user.dob ?? '';
-
-    _isDataPrefilled = true;
-    _onFilter();
   }
 
   void _onScroll() {
@@ -103,11 +108,12 @@ class _SearchPageState extends State<SearchPage> {
   void _onFilter() {
     final schemeManager = context.read<SchemeManager>();
     final double? income = double.tryParse(_incomeController.text.trim());
+
     schemeManager.setFilter(
-      _selectedCategory,
-      _selectedGender,
+      _selectedCategory ?? '',
+      _selectedGender ?? '',
       _cityController.text.trim(),
-      income,
+      income ?? 0.0,
       _selectedDisableOption,
       _selectedMinorityOption,
       _selectedBplOption,
@@ -128,9 +134,32 @@ class _SearchPageState extends State<SearchPage> {
       _cityController.clear();
       _incomeController.clear();
       _dobController.clear();
+      _isMatchProfileEnabled = false; // ✅ reset here
     });
-    _onFilter();
   }
+
+  void _prefillUserData(UserManager manager, [void Function(void Function())? setModalState]) {
+    final user = manager.user;
+    if (user == null) return;
+
+    final setter = setModalState ?? setState;
+
+    setter(() {
+      _selectedGender = user.gender;
+      _selectedCategory = user.category;
+      _selectedEduCategory = user.educationLevel;
+      _selectedMaritalStatus = user.maritalStatus;
+      _selectedResidenceType = user.residenceType;
+      _selectedMinorityOption = user.minority ?? false;
+      _selectedDisableOption = user.differentlyAbled ?? false;
+      _selectedBplOption = user.bplCategory ?? false;
+      _occupationController.text = user.occupation ?? '';
+      _cityController.text = user.city ?? '';
+      _incomeController.text = user.income?.toString() ?? '';
+      _dobController.text = user.dob ?? '';
+    });
+  }
+
 
   void _startListening() async {
     bool available = await _speech.initialize(
@@ -156,92 +185,196 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _showFilterOptions() {
+    final userManager = context.read<UserManager>();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       builder: (_) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.9,
-          builder: (context, scrollController) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              child: ListView(
-                controller: scrollController,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Filter Schemes", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      IconButton(
-                        icon: const Icon(Icons.clear_all, color: Colors.redAccent),
-                        onPressed: _clearFilters,
-                      )
-                    ],
-                  ),
-                  const Divider(height: 24),
-                  _buildDropdown("Gender", _selectedGender, _genders, (val) => setState(() => _selectedGender = val)),
-                  const SizedBox(height: 12),
-                  _buildDropdown("Scheme Category", _selectedCategory, _schemeCategories, (val) => setState(() => _selectedCategory = val)),
-                  const SizedBox(height: 12),
-                  _buildDropdown("Education Level", _selectedEduCategory, _eduCategories, (val) => setState(() => _selectedEduCategory = val)),
-                  const SizedBox(height: 12),
-                  _buildDropdown("Marital Status", _selectedMaritalStatus, _maritalStatus, (val) => setState(() => _selectedMaritalStatus = val)),
-                  const SizedBox(height: 12),
-                  _buildDropdown("Residence Type", _selectedResidenceType, _residenceTypes, (val) => setState(() => _selectedResidenceType = val)),
-                  const SizedBox(height: 20),
-                  _buildCheckbox("Are you from a minority group?", _selectedMinorityOption, (val) => setState(() => _selectedMinorityOption = val ?? false)),
-                  _buildCheckbox("Are you differently abled?", _selectedDisableOption, (val) => setState(() => _selectedDisableOption = val ?? false)),
-                  _buildCheckbox("Do you have a BPL card?", _selectedBplOption, (val) => setState(() => _selectedBplOption = val ?? false)),
-                  const SizedBox(height: 12),
-                  _buildTextField("Occupation", _occupationController),
-                  _buildTextField("City", _cityController),
-                  _buildTextField("Income", _incomeController, isNumber: true),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _dobController,
-                    readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Date of Birth',
-                      prefixIcon: Icon(Icons.calendar_today_outlined),
-                      border: OutlineInputBorder(),
-                    ),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
-                        firstDate: DateTime(1900),
-                        lastDate: DateTime.now(),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _dobController.text = "${picked.day}/${picked.month}/${picked.year}";
-                        });
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.72),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.9,
+              builder: (context, scrollController) {
+                return StatefulBuilder(
+                  builder: (context, setModalState) {
+                    void turnOffMatchProfile() {
+                      if (_isMatchProfileEnabled) {
+                        setModalState(() => _isMatchProfileEnabled = false);
+                        setState(() {});
                       }
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _onFilter();
-                    },
-                    icon: const Icon(Icons.filter_alt_outlined),
-                    label: const Text("Apply Filters", style: TextStyle(fontSize: 16)),
-                  ),
-                ],
-              ),
-            );
-          },
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                      child: ListView(
+                        controller: scrollController,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Filter Schemes",
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold, color: Colors.blue[800])),
+                              TextButton.icon(
+                                onPressed: () {
+                                  _clearFilters();
+                                  setModalState(() {});
+                                  _onFilter();
+                                },
+                                icon: const Icon(Icons.clear_all, color: Colors.redAccent),
+                                label: const Text("Clear Filters",
+                                    style: TextStyle(
+                                        color: Colors.redAccent, fontWeight: FontWeight.w600)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            activeColor: Colors.blueAccent,
+                            title: const Text("Match My Profile"),
+                            subtitle: const Text("Auto-fill filters using your saved profile"),
+                            value: _isMatchProfileEnabled,
+                            onChanged: (val) {
+                              setModalState(() => _isMatchProfileEnabled = val);
+                              setState(() {});
+                              if (val) {
+                                _prefillUserData(userManager, setModalState);
+                                Future.delayed(const Duration(milliseconds: 200), _onFilter);
+                              }
+                            },
+                          ),
+                          const Divider(height: 28),
+
+                          _buildDropdown("Gender", _selectedGender, _genders, (val) {
+                            turnOffMatchProfile();
+                            setModalState(() => _selectedGender = val);
+                          }),
+                          const SizedBox(height: 16),
+                          _buildDropdown("Scheme Category", _selectedCategory, _schemeCategories,
+                                  (val) {
+                                turnOffMatchProfile();
+                                setModalState(() => _selectedCategory = val);
+                              }),
+                          const SizedBox(height: 16),
+                          _buildDropdown("Education Level", _selectedEduCategory, _eduCategories,
+                                  (val) {
+                                turnOffMatchProfile();
+                                setModalState(() => _selectedEduCategory = val);
+                              }),
+                          const SizedBox(height: 16),
+                          _buildDropdown("Marital Status", _selectedMaritalStatus, _maritalStatus,
+                                  (val) {
+                                turnOffMatchProfile();
+                                setModalState(() => _selectedMaritalStatus = val);
+                              }),
+                          const SizedBox(height: 16),
+                          _buildDropdown("Residence Type", _selectedResidenceType, _residenceTypes,
+                                  (val) {
+                                turnOffMatchProfile();
+                                setModalState(() => _selectedResidenceType = val);
+                              }),
+
+                          const SizedBox(height: 24),
+                          const Divider(height: 24),
+
+                          SwitchListTile.adaptive(
+                            title: const Text("Are you from a minority group?"),
+                            activeColor: Colors.blueAccent,
+                            value: _selectedMinorityOption,
+                            onChanged: (val) {
+                              turnOffMatchProfile();
+                              setModalState(() => _selectedMinorityOption = val);
+                            },
+                          ),
+                          SwitchListTile.adaptive(
+                            title: const Text("Are you differently abled?"),
+                            activeColor: Colors.blueAccent,
+                            value: _selectedDisableOption,
+                            onChanged: (val) {
+                              turnOffMatchProfile();
+                              setModalState(() => _selectedDisableOption = val);
+                            },
+                          ),
+                          SwitchListTile.adaptive(
+                            title: const Text("Do you have a BPL card?"),
+                            activeColor: Colors.blueAccent,
+                            value: _selectedBplOption,
+                            onChanged: (val) {
+                              turnOffMatchProfile();
+                              setModalState(() => _selectedBplOption = val);
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                          const Divider(height: 24),
+
+                          _buildTextField("Occupation", _occupationController,
+                              onChanged: (_) => turnOffMatchProfile()),
+                          _buildTextField("City", _cityController,
+                              onChanged: (_) => turnOffMatchProfile()),
+                          _buildTextField("Income", _incomeController,
+                              isNumber: true, onChanged: (_) => turnOffMatchProfile()),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _dobController,
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              labelText: 'Date of Birth',
+                              prefixIcon: const Icon(Icons.calendar_today_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onTap: () async {
+                              turnOffMatchProfile();
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now().subtract(const Duration(days: 6570)),
+                                firstDate: DateTime(1900),
+                                lastDate: DateTime.now(),
+                              );
+                              if (picked != null) {
+                                setModalState(() {
+                                  _dobController.text =
+                                  "${picked.day}/${picked.month}/${picked.year}";
+                                });
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 30),
+
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.filter_alt_outlined),
+                            label: const Text("Apply Filters", style: TextStyle(fontSize: 16)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _onFilter();
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
         );
       },
     );
@@ -260,11 +393,13 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool isNumber = false}) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      {bool isNumber = false, void Function(String)? onChanged}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: controller,
+        onChanged: onChanged,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
@@ -274,116 +409,105 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildCheckbox(String title, bool value, ValueChanged<bool?> onChanged) {
-    return CheckboxListTile(
-      title: Text(title),
-      value: value,
-      onChanged: onChanged,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      controlAffinity: ListTileControlAffinity.leading,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search Schemes'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.backgroundColor),
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.white,
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.search, color: Colors.grey),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: _onSearch,
-                      style: const TextStyle(color: Colors.black87),
-                      decoration: const InputDecoration(
-                        hintText: 'Enter Scheme Name to Search...',
-                        border: InputBorder.none,
+      backgroundColor: Colors.grey[100],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Material(
+              elevation: 3,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.search, color: Colors.grey),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: _onSearch,
+                        style: const TextStyle(color: Colors.black87),
+                        decoration: const InputDecoration(
+                          hintText: 'Enter Scheme Name...',
+                          border: InputBorder.none,
+                        ),
                       ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      if (_isListening) {
-                        _speech.stop();
-                        setState(() => _isListening = false);
-                      } else {
-                        _startListening();
-                      }
-                    },
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: _isListening
-                          ? Lottie.asset('assets/animations/mic_listening.json')
-                          : const Icon(Icons.mic_none, color: Colors.grey),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.filter_list, color: Colors.grey),
-                    onPressed: _showFilterOptions,
-                  )
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Consumer<SchemeManager>(
-                  builder: (context, schemeManager, _) {
-                    final schemes = schemeManager.scheme;
-                    if (schemeManager.schemeLoadingStatus == Status.loading && (schemes == null || schemes.isEmpty)) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (schemes == null || schemes.isEmpty) {
-                      return const Center(child: Text('Nothing to show here.'));
-                    }
-                    return RefreshIndicator(
-                      onRefresh: () async {
-                        schemeManager.resetState();
-                        await schemeManager.getScheme(showLoading: true);
+                    GestureDetector(
+                      onTap: () {
+                        if (_isListening) {
+                          _speech.stop();
+                          setState(() => _isListening = false);
+                        } else {
+                          _startListening();
+                        }
                       },
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: schemes.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == schemes.length) {
-                            return schemeManager.hasMoreData
-                                ? const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                              child: Center(child: CircularProgressIndicator()),
-                            )
-                                : const SizedBox.shrink();
-                          }
-                          final scheme = schemes[index];
-                          return SchemeItem(scheme: scheme);
-                        },
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: _isListening
+                            ? Lottie.asset('assets/animations/mic_listening.json')
+                            : const Icon(Icons.mic_none, color: Colors.grey),
                       ),
-                    );
-                  },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.filter_list, color: Colors.grey),
+                      onPressed: _showFilterOptions,
+                    )
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: Consumer<SchemeManager>(
+              builder: (context, schemeManager, _) {
+                final schemes = schemeManager.scheme;
+                if (schemeManager.schemeLoadingStatus == Status.loading &&
+                    (schemes == null || schemes.isEmpty)) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (schemes == null || schemes.isEmpty) {
+                  return const Center(child: Text('Nothing to show here.'));
+                }
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    schemeManager.resetState();
+                    await schemeManager.getScheme(showLoading: true);
+                  },
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: schemes.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == schemes.length) {
+                        return schemeManager.hasMoreData
+                            ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                            : const SizedBox.shrink();
+                      }
+                      final scheme = schemes[index];
+                      return SchemeItem(scheme: scheme);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -26,4 +26,15 @@ class SchemeRepositoryImplementation extends SchemeRepository {
       minority: minority,
       bpl_category: bpl_category);
 
+  @override
+  AppTypeResponse<Scheme> getSchemeId({required int schemeId}) => _schemeDataSource.getSchemeId(
+      schemeId: schemeId);
+
+  @override
+  AppSuccessResponse rateScheme({required int schemeId,required int userId,
+    required double rating}) => _schemeDataSource.rateScheme(schemeId: schemeId, userId: userId, rating : rating);
+
+  @override
+  AppSuccessResponse createBookmark({required String firebaseId, required int schemeId}) => _schemeDataSource.createBookmark(firebaseId: firebaseId, schemeId: schemeId);
+
 }

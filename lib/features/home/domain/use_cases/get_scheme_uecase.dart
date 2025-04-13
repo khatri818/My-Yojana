@@ -22,4 +22,5 @@ class GetSchemeUseCase {
       differently_abled: differently_abled,
       minority: minority,
       bpl_category: bpl_category);
+
 }

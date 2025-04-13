@@ -25,6 +25,10 @@ class Scheme extends Equatable {
   final String? localBody;
   final String? educationCriteria;
   final List<String>? keywords;
+  final double? averagerating;
+  final int? totalrating;
+  final int? isBookmarked;
+  final double? userRating;
 
   const Scheme({
     this.id,
@@ -52,6 +56,10 @@ class Scheme extends Equatable {
     this.localBody,
     this.educationCriteria,
     this.keywords,
+    this.averagerating,
+    this.totalrating,
+    this.isBookmarked,
+    this.userRating,
   });
   @override
   List<Object?> get props => [
@@ -80,5 +88,9 @@ class Scheme extends Equatable {
     localBody,
     educationCriteria,
     keywords,
+    averagerating,
+    totalrating,
+    isBookmarked,
+    userRating
   ];
 }

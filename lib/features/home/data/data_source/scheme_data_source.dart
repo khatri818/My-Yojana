@@ -10,4 +10,11 @@ abstract class SchemeDataSource {
     required bool differently_abled,
     required bool minority,
     required bool bpl_category});
+
+  AppTypeResponse<Scheme> getSchemeId({required int schemeId});
+
+  AppSuccessResponse rateScheme({required int schemeId,required int userId,
+    required double rating,});
+
+  AppSuccessResponse createBookmark({required String firebaseId,required int schemeId});
 }
