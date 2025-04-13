@@ -1,5 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:my_yojana/features/home/presentation/pages/home_screen.dart';
+import 'package:my_yojana/features/home/presentation/pages/search_screen.dart';
 import 'package:provider/provider.dart';
 import '../../../../common/app_colors.dart';
 import '../../../../constant/image_resource.dart';
@@ -9,6 +10,7 @@ import '../manager/bottom_nav_manager.dart';
 import '../manager/scheme_manger.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
+import 'home_screen.dart';
 
 class BottomNav extends StatefulWidget {
   const BottomNav({super.key});
@@ -36,10 +38,9 @@ class _BottomNavState extends State<BottomNav> {
         final schemeManager = context.read<SchemeManager>();
 
         await userManager.getUser(userSession.token);
-        await schemeManager.getScheme(); // Optional: only if needed
+        await schemeManager.getScheme();
       } else {
         debugPrint('User session is null');
-        // Optionally redirect to login or show message
       }
     } catch (e, stack) {
       debugPrint('Error fetching user: $e');
@@ -50,11 +51,37 @@ class _BottomNavState extends State<BottomNav> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.white.withOpacity(0),
-        title: Image.asset(ImageResource.bannerLogo, height: 45),
-        centerTitle: true,
+      extendBody: true,
+      backgroundColor: const Color(0xFFF9FAFB),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.4),
+                    Colors.white.withOpacity(0.2),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                border: const Border(
+                  bottom: BorderSide(color: Colors.white24, width: 0.3),
+                ),
+              ),
+              child: AppBar(
+                elevation: 0,
+                backgroundColor: Colors.transparent,
+                title: Image.asset(ImageResource.bannerLogo, height: 45),
+                centerTitle: true,
+              ),
+            ),
+          ),
+        ),
       ),
       drawer: const AppDrawer(),
       body: Consumer<BottomNavProvider>(
@@ -63,22 +90,46 @@ class _BottomNavState extends State<BottomNav> {
             index: provider.selectedIndex,
             children: const [
               HomePage(),
-              HomePage(),
-              HomePage(),
-              HomePage(),
+              HomePage(), // Replace with BookmarkPage when available
             ],
           );
         },
       ),
       resizeToAvoidBottomInset: false,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        backgroundColor: AppColors.backgroundColor,
-        onPressed: () {},
-        child: const Icon(
-          Icons.search,
-          color: AppColors.white,
+      floatingActionButton: Container(
+        height: 56,
+        width: 56,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [Color(0xFF2575FC), Color(0xFF6A11CB)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x332575FC),
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SearchPage(isMatchScheme: false)),
+              );
+            },
+            child: const Center(
+              child: Icon(Icons.search, color: Colors.white, size: 26),
+            ),
+          ),
         ),
       ),
       bottomNavigationBar: const CustomBottomAppBar(),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../../../common/common_button.dart';
 import '../../../../core/constant/storage_key.dart';
 import '../../../../core/enum/status.dart';
@@ -19,13 +18,59 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  FocusNode focusNode = FocusNode();
+  // Separate GlobalKeys for multi-step form validations
+  final GlobalKey<FormState> _formKeyStep1 = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKeyStep2 = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKeyStep3 = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKeyStep4 = GlobalKey<FormState>();
 
   String phoneNumber = '';
   String countryCode = '';
   String firebaseId = '';
+  int _currentStep = 1;
+
+  TextEditingController phoneController = TextEditingController();
+  final TextEditingController _fnameController = TextEditingController();
+  final TextEditingController _lnameController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _occupationController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _incomeController = TextEditingController();
+  final TextEditingController _disabilityController = TextEditingController();
+
+  // Selections
+  String? _selectedGender;
+  String? _selectedCategory;
+  String? _selectedCasteCategory;
+  String? _selectedEduCategory;
+  bool? _selectedMinorityOption;
+  bool? _selectedDisableOption;
+  String? _selectedMaritalStatus;
+  bool? _selectedBplOption;
+  String? _selectedResidenceType;
+
+  final List<String> _schemeCategories = [
+    'Health',
+    'Insurance',
+    'Employment',
+    'Agriculture',
+    'Housing',
+    'Financial Assistance',
+    'Safety',
+    'Subsidy',
+    'Education',
+    'Pension',
+    'Business',
+    'Loan'
+  ];
+  final List<String> _casteCategories = [
+    'General',
+    'Other Backward Class (OBC)',
+    'Scheduled Caste',
+    'Scheduled Tribe'
+  ];
+  final List<String> _eduCategories = ['Below 10th', 'Graduation', 'Above Graduation'];
 
   @override
   void initState() {
@@ -50,695 +95,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() {});
   }
 
-  String? _selectedGender;
-  String? _selectedCategory;
-  String? _selectedCasteCategory;
-  String? _selectedEduCategory;
-  bool? _selectedMinorityOption;
-  bool? _selectedDisableOption;
-  String? _selectedMaritalStatus;
-  bool? _selectedBplOption;
-  String? _selectedResidenceType;
-  TextEditingController phoneController = TextEditingController();
-  final TextEditingController _fnameController = TextEditingController();
-  final TextEditingController _lnameController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
-  final TextEditingController _occupationController = TextEditingController();
-  final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _disabilityController = TextEditingController();
-  final TextEditingController _incomeController = TextEditingController();
-  final TextEditingController _dobController = TextEditingController();
-  int _currentStep = 1;
-
-  final List<String> _eligibilityOptions = ['Self', 'Spouse', 'Child', 'Parent'];
-  final List<String> _schemeCategories = ['Education', 'Scholarship','Hospital', 'Agriculture','Insurance','Housing','Fund Support',];
-  final List<String> _casteCategories = ['General', 'Other Backward Class (OBC)', 'Scheduled Caste','Scheduled Tribe'];
-  final List<String> _eduCategories = ['Below 10th', 'Graduation', 'Above Graduation'];
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('My Yojana')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Interested in checking which schemes you are eligible for?',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              'Please fill in the details below',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.blue, width: 1.5),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Progress bar and Back button
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: _currentStep > 1
-                            ? () {
-                          setState(() {
-                            _currentStep--;
-                          });
-                        }
-                            : null,
-                        icon: const Icon(Icons.arrow_back, color: Colors.blue),
-                      ),
-                      Expanded(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: List.generate(5, (index) {
-                            return Container(
-                              width: 30,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: index < _currentStep ? Colors.blue : Colors.grey[300],
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Screen content
-                  if (_currentStep == 1) ...[
-                    _buildScreen1Content(),
-                  ] else if (_currentStep == 2) ...[
-                    _buildScreen2Content(),
-
-                  ] else if (_currentStep == 3) ...[
-                    _buildScreen3Content(),
-                  ] else if (_currentStep == 4) ...[
-                    _buildScreen4Content(),
-                  ] else if (_currentStep == 5) ...[
-                    _buildScreen5Content(),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Widget _buildScreen1Content() {
-
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          const Text('Enter Your Name'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _fnameController,
-                  decoration: InputDecoration(
-                    hintText: 'First Name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'First name is required';
-                    } else if (!RegExp(r"^[a-zA-Z]+$").hasMatch(value)) {
-                      return 'Only alphabets allowed';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: _lnameController,
-                  decoration: InputDecoration(
-                    hintText: 'Last Name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Last name is required';
-                    } else if (!RegExp(r"^[a-zA-Z]+$").hasMatch(value)) {
-                      return 'Only alphabets allowed';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text('Choose Your Gender'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildRadioOptionString('Male', _selectedGender, (value) {
-                setState(() => _selectedGender = value);
-              }),
-              const SizedBox(width: 8),
-              _buildRadioOptionString('Female', _selectedGender, (value) {
-                setState(() => _selectedGender = value);
-              }),
-              const SizedBox(width: 8),
-              _buildRadioOptionString('Other', _selectedGender, (value) {
-                setState(() => _selectedGender = value);
-              }),
-            ],
-          ),
-          if (_selectedGender == null)
-            const Padding(
-              padding: EdgeInsets.only(left: 12, top: 4),
-              child: Text(
-                'Please select a gender',
-                style: TextStyle(color: Colors.red, fontSize: 12),
-              ),
-            ),
-          const SizedBox(height: 16),
-          const Text('Enter Your Age'),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _ageController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: 'Enter your age',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Age is required';
-              }
-              if (int.tryParse(value) == null) {
-                return 'Enter a valid number';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          const Text('Enter Date of Birth'),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: () async {
-              DateTime? pickedDate = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime(1900),
-                lastDate: DateTime.now(),
-              );
-              if (pickedDate != null) {
-                setState(() {
-                  _dobController.text = '${pickedDate.day}/${pickedDate.month}/${pickedDate.year}';
-                });
-              }
-            },
-            child: AbsorbPointer(
-              child: TextFormField(
-                controller: _dobController,
-                decoration: InputDecoration(
-                  hintText: 'Select your date of birth',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  suffixIcon: const Icon(Icons.calendar_today),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Date of Birth is required';
-                  }
-                  return null;
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate() && _selectedGender != null) {
-                  setState(() {
-                    _currentStep++;
-                  });
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please fill all fields correctly'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: const Text('Next'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRadioOptionString(String optionValue, String? groupValue, ValueChanged<String?> onChanged) {
-    return Row(
-      children: [
-        Radio<String>(
-          value: optionValue,
-          groupValue: groupValue,
-          onChanged: onChanged,
-        ),
-        Text(optionValue),
-      ],
-    );
-  }
-
-
-  Widget _buildScreen2Content() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          const Text('Select Scheme Category'),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            ),
-            value: _selectedCategory,
-            items: _schemeCategories.map((String category) {
-              return DropdownMenuItem<String>(
-                value: category,
-                child: Text(category),
-              );
-            }).toList(),
-            onChanged: (String? value) {
-              setState(() {
-                _selectedCategory = value;
-              });
-            },
-            validator: (value) => value == null ? 'Please select a category' : null,
-          ),
-          const SizedBox(height: 16),
-          const Text('Enter Your Occupation'),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _occupationController,
-            decoration: InputDecoration(
-              hintText: 'Enter your occupation',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            validator: (value) => value == null || value.isEmpty ? 'Occupation cannot be empty' : null,
-          ),
-          const SizedBox(height: 16),
-          const Text('Enter Your City'),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _cityController,
-            decoration: InputDecoration(
-              hintText: 'Enter your city',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            validator: (value) => value == null || value.isEmpty ? 'City cannot be empty' : null,
-          ),
-          const SizedBox(height: 16),
-          const Text('Residence Type'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildRadioOptionString('Rural', _selectedResidenceType, (value) {
-                setState(() {
-                  _selectedResidenceType = value;
-                });
-              }),
-              const SizedBox(width: 8),
-              _buildRadioOptionString('Urban', _selectedResidenceType, (value) {
-                setState(() {
-                  _selectedResidenceType = value;
-                });
-              }),
-              const SizedBox(width: 8),
-              _buildRadioOptionString('Semi-Urban', _selectedResidenceType, (value) {
-                setState(() {
-                  _selectedResidenceType = value;
-                });
-              }),
-            ],
-          ),
-          if (_selectedResidenceType == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text('Please select a residence type', style: TextStyle(color: Colors.red)),
-            ),
-          const SizedBox(height: 24),
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate() && _validateResidenceType()) {
-                  setState(() {
-                    _currentStep++;
-                  });
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: const Text('Next'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  bool _validateResidenceType() {
-    if (_selectedResidenceType == null) {
-      setState(() {});
-      return false;
-    }
-    return true;
-  }
-
-  Widget _buildRadioOption(bool optionValue, bool? groupValue, ValueChanged<bool?> onChanged) {
-    return Row(
-      children: [
-        Radio<bool>(
-          value: optionValue,
-          groupValue: groupValue,
-          onChanged: onChanged,
-        ),
-        Text(optionValue ? 'Yes' : 'No'),
-      ],
-    );
-  }
-
-  Widget _buildScreen3Content() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          const Text('Select Category'),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                  vertical: 8, horizontal: 12),
-            ),
-            value: _selectedCasteCategory,
-            items: _casteCategories.map((String category) {
-              return DropdownMenuItem<String>(
-                value: category,
-                child: Text(category),
-              );
-            }).toList(),
-            onChanged: (String? value) {
-              setState(() {
-                _selectedCasteCategory = value;
-              });
-            },
-            validator: (value) =>
-            value == null
-                ? 'Please select a category'
-                : null,
-          ),
-          const SizedBox(height: 16),
-          const Text('Are you a minority?'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildRadioOption(true, _selectedMinorityOption, (value) {
-                setState(() {
-                  _selectedMinorityOption = value;
-                });
-              }),
-              const SizedBox(width: 8),
-              _buildRadioOption(false, _selectedMinorityOption, (value) {
-                setState(() {
-                  _selectedMinorityOption = value;
-                });
-              }),
-            ],
-          ),
-          if (_selectedMinorityOption == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text('Please select an option',
-                  style: TextStyle(color: Colors.red)),
-            ),
-          const SizedBox(height: 16),
-          const Text('Are you Disabled?'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildRadioOption(true, _selectedDisableOption, (value) {
-                setState(() {
-                  _selectedDisableOption = value;
-                });
-              }),
-              const SizedBox(width: 8),
-              _buildRadioOption(false, _selectedDisableOption, (value) {
-                setState(() {
-                  _selectedDisableOption = value;
-                });
-              }),
-            ],
-          ),
-          if (_selectedDisableOption == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text('Please select an option',
-                  style: TextStyle(color: Colors.red)),
-            ),
-          const SizedBox(height: 16),
-          const Text('Enter Your Disability Percentage'),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _disabilityController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: 'Enter percentage',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a percentage';
-              }
-              final percentage = int.tryParse(value);
-              if (percentage == null || percentage < 0 || percentage > 100) {
-                return 'Enter a valid percentage (0-100)';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  setState(() {
-                    _currentStep++;
-                  });
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 12),
-              ),
-              child: const Text('Next'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScreen4Content() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          const Text('Marital Status'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildRadioOptionString('Single', _selectedMaritalStatus, (value) {
-                setState(() {
-                  _selectedMaritalStatus = value;
-                });
-              }),
-              const SizedBox(width: 8),
-              _buildRadioOptionString('Married', _selectedMaritalStatus, (value) {
-                setState(() {
-                  _selectedMaritalStatus = value;
-                });
-              }),
-              const SizedBox(width: 8),
-              _buildRadioOptionString('Divorced', _selectedMaritalStatus, (value) {
-                setState(() {
-                  _selectedMaritalStatus = value;
-                });
-              }),
-            ],
-          ),
-          if (_selectedMaritalStatus == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text('Please select marital status', style: TextStyle(color: Colors.red)),
-            ),
-          const SizedBox(height: 16),
-          const Text('Are you below poverty line?'),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildRadioOption(true, _selectedBplOption, (value) {
-                setState(() {
-                  _selectedBplOption = value;
-                });
-              }),
-              const SizedBox(width: 8),
-              _buildRadioOption(false, _selectedBplOption, (value) {
-                setState(() {
-                  _selectedBplOption = value;
-                });
-              }),
-            ],
-          ),
-          if (_selectedBplOption == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text('Please select an option', style: TextStyle(color: Colors.red)),
-            ),
-          const SizedBox(height: 16),
-          const Text('Enter Your Income'),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _incomeController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: 'Enter your income',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your income';
-              }
-              final income = double.tryParse(value);
-              if (income == null || income < 0) {
-                return 'Enter a valid income';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          const Text('Select Education level'),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            ),
-            value: _selectedEduCategory,
-            items: _eduCategories.map((String category) {
-              return DropdownMenuItem<String>(
-                value: category,
-                child: Text(category),
-              );
-            }).toList(),
-            onChanged: (String? value) {
-              setState(() {
-                _selectedEduCategory = value;
-              });
-            },
-            validator: (value) => value == null ? 'Please select education level' : null,
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: Consumer<AuthManager>(
-              builder: (context, state, child) {
-                if (state.registerLoadingStatus.loading) {
-                  return const CircularProgressIndicator();
-                }
-                return Consumer<AuthManager>(
-                  builder: (context, state, child) {
-                    if (state.registerLoadingStatus.loading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    return CommonButton(
-                        label: "SUBMIT", onPressed: _onSubmitForm);
-                  },
-                );
-              },
-            ),
-          )
-        ],
-      ),
-    );
-  }
-  void _onSubmitForm() async {
-
-    final manager = context.read<AuthManager>();
-
+  void _onSubmitForm(AuthManager manager) async {
     String formatDate(String dobText) {
       try {
-        // Try parsing the text into a DateTime object
-        DateTime parsedDate = DateFormat('dd/MM/yyyy').parse(dobText);
-
-        // Convert it to the desired format
+        final parsedDate = DateFormat('dd/MM/yyyy').parse(dobText);
         return DateFormat('yyyy-MM-dd').format(parsedDate);
-      } catch (e) {
-        return 'Error in Date'; // Return empty if parsing fails
+      } catch (_) {
+        return '';
       }
     }
 
@@ -746,9 +114,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       firebaseId: firebaseId,
       name: '${_fnameController.text} ${_lnameController.text}',
       occupation: _occupationController.text,
-      maritalStatus: _selectedMaritalStatus?.toLowerCase() ?? '',
+      maritalStatus: _selectedMaritalStatus ?? '',
       city: _cityController.text,
-      residenceType: _selectedResidenceType?.toLowerCase() ?? '',
+      residenceType: _selectedResidenceType ?? '',
       category: _selectedCategory ?? '',
       differentlyAbled: _selectedDisableOption ?? false,
       disabilityPercentage: int.tryParse(_disabilityController.text) ?? 0,
@@ -758,242 +126,490 @@ class _RegisterScreenState extends State<RegisterScreen> {
       educationLevel: _selectedEduCategory ?? '',
       preferredLanguage: 'en',
       dob: formatDate(_dobController.text),
-      gender: _selectedGender?.toLowerCase() ?? '',
+      gender: _selectedGender ?? '',
     );
 
-
-
-
-    await manager.signup(context, userSignUpFormData: user, onSuccess: () {
-      // context.read<ProfileManager>().fetchProfile(context);
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (context) => const BottomNav(),
-        ),
-            (Route<dynamic> route) => false,
-      );
-    });
+    await manager.signup(
+      context,
+      userSignUpFormData: user,
+      onSuccess: () {
+        setState(() {
+          _currentStep++;
+        });
+      },
+    );
   }
 
-  Widget _buildScreen5Content() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 24),
-        Center(
-          child: Column(
-            children: [
-              // // Add image
-              // Image.asset(
-              //   'assets/congrats.png', // Ensure this path matches your asset directory
-              //   height: 160,
-              //   width: 160,
-              // ),
-              const SizedBox(height: 12),
-              // Add Congratulations text
-              const Text(
-                'Congratulations',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: const Text('Register'),
+        centerTitle: true,
+        elevation: 0.5,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Text('Fill in your details to get eligible schemes',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.blue),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 8),
-              // Add eligibility message
-              const Text(
-                'You are eligible for 13 schemes',
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 24),
-              // Add Next button
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _currentStep++;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: _currentStep > 1
+                            ? () => setState(() => _currentStep--)
+                            : null,
+                        icon: const Icon(Icons.arrow_back, color: Colors.blue),
+                      ),
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: List.generate(
+                            5,
+                                (index) => Container(
+                              width: 30,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: index < _currentStep
+                                    ? Colors.blue
+                                    : Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  const SizedBox(height: 16),
+                  if (_currentStep == 1) _buildScreen1(),
+                  if (_currentStep == 2) _buildScreen2(),
+                  if (_currentStep == 3) _buildScreen3(),
+                  if (_currentStep == 4) _buildScreen4(),
+                  if (_currentStep == 5) _buildScreen5(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _gradientButton(String label, VoidCallback onPressed) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        gradient: const LinearGradient(colors: [Colors.deepPurple, Colors.blue]),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.deepPurple.withOpacity(0.4),
+            offset: const Offset(0, 4),
+            blurRadius: 10,
+          )
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Center(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
-                child: const Text('Check Schemes'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Step 1: Basic Details (Name, Gender, Age, DOB)
+  Widget _buildScreen1() {
+    return Form(
+      key: _formKeyStep1,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Enter your Name'),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _fnameController,
+                  decoration: const InputDecoration(labelText: 'First Name'),
+                  validator: (val) =>
+                  val == null || val.trim().isEmpty ? 'Required' : null,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextFormField(
+                  controller: _lnameController,
+                  decoration: const InputDecoration(labelText: 'Last Name'),
+                  validator: (val) =>
+                  val == null || val.trim().isEmpty ? 'Required' : null,
+                ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          const Text('Gender'),
+          Row(
+            children: ['male', 'female', 'other'].map((g) {
+              return Expanded(
+                child: RadioListTile<String>(
+                  value: g,
+                  title: Text(g),
+                  groupValue: _selectedGender,
+                  onChanged: (val) => setState(() => _selectedGender = val),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _ageController,
+            decoration: const InputDecoration(labelText: 'Age'),
+            keyboardType: TextInputType.number,
+            validator: (val) {
+              if (val == null || val.trim().isEmpty) return 'Required';
+              if (int.tryParse(val) == null) return 'Enter valid age';
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(1900),
+                lastDate: DateTime.now(),
+              );
+              if (date != null) {
+                _dobController.text = DateFormat('dd/MM/yyyy').format(date);
+              }
+            },
+            child: AbsorbPointer(
+              child: TextFormField(
+                controller: _dobController,
+                decoration: const InputDecoration(labelText: 'Date of Birth'),
+                validator: (val) =>
+                val == null || val.trim().isEmpty ? 'Required' : null,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          _gradientButton('Next', () {
+            if (_formKeyStep1.currentState!.validate()) {
+              if (_selectedGender == null) {
+                _showError('Please select your gender');
+                return;
+              }
+              setState(() => _currentStep++);
+            }
+          }),
+        ],
+      ),
+    );
+  }
+
+  // Step 2: Scheme and Residence Details
+  Widget _buildScreen2() {
+    return Form(
+      key: _formKeyStep2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Select Scheme Category'),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _selectedCategory,
+            decoration: const InputDecoration(labelText: 'Category'),
+            items: _schemeCategories
+                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .toList(),
+            onChanged: (val) => setState(() => _selectedCategory = val),
+            validator: (val) =>
+            val == null || val.trim().isEmpty ? 'Please select a category' : null,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _occupationController,
+            decoration: const InputDecoration(labelText: 'Occupation'),
+            validator: (val) =>
+            val == null || val.trim().isEmpty ? 'Required' : null,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _cityController,
+            decoration: const InputDecoration(labelText: 'City'),
+            validator: (val) =>
+            val == null || val.trim().isEmpty ? 'Required' : null,
+          ),
+          const SizedBox(height: 16),
+          const Text('Residence Type'),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+            ),
+            child: Column(
+              children: ['rural', 'urban', 'semi-urban'].map((res) {
+                return RadioListTile<String>(
+                  value: res,
+                  groupValue: _selectedResidenceType,
+                  title: Text(res),
+                  onChanged: (val) =>
+                      setState(() => _selectedResidenceType = val),
+                  dense: true,
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 24),
+          _gradientButton('Next', () {
+            if (_formKeyStep2.currentState!.validate()) {
+              if (_selectedResidenceType == null) {
+                _showError('Please select your residence type');
+                return;
+              }
+              setState(() => _currentStep++);
+            }
+          }),
+        ],
+      ),
+    );
+  }
+
+  // Step 3: Caste and Disability Details
+  Widget _buildScreen3() {
+    return Form(
+      key: _formKeyStep3,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Select Caste Category'),
+          DropdownButtonFormField<String>(
+            value: _selectedCasteCategory,
+            decoration: const InputDecoration(labelText: 'Caste'),
+            items: _casteCategories
+                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .toList(),
+            onChanged: (val) => setState(() => _selectedCasteCategory = val),
+            validator: (val) =>
+            val == null || val.trim().isEmpty ? 'Please select a caste' : null,
+          ),
+          const SizedBox(height: 16),
+          const Text('Are you a Minority?'),
+          Row(
+            children: [true, false].map((val) {
+              return Expanded(
+                child: RadioListTile<bool>(
+                  value: val,
+                  groupValue: _selectedMinorityOption,
+                  title: Text(val ? 'Yes' : 'No'),
+                  onChanged: (v) => setState(() => _selectedMinorityOption = v),
+                  dense: true,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          const Text('Are you Disabled?'),
+          Row(
+            children: [true, false].map((val) {
+              return Expanded(
+                child: RadioListTile<bool>(
+                  value: val,
+                  groupValue: _selectedDisableOption,
+                  title: Text(val ? 'Yes' : 'No'),
+                  onChanged: (v) => setState(() => _selectedDisableOption = v),
+                  dense: true,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _disabilityController,
+            decoration: const InputDecoration(labelText: 'Disability %'),
+            keyboardType: TextInputType.number,
+            // Conditionally validate if the user is disabled.
+            validator: (val) {
+              if (_selectedDisableOption == true) {
+                if (val == null || val.trim().isEmpty) {
+                  return 'Required if disabled';
+                }
+                final percentage = int.tryParse(val);
+                if (percentage == null || percentage < 0 || percentage > 100) {
+                  return 'Enter a value between 0 and 100';
+                }
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 24),
+          _gradientButton('Next', () {
+            if (_formKeyStep3.currentState!.validate()) {
+              if (_selectedMinorityOption == null) {
+                _showError('Please select an option for Minority');
+                return;
+              }
+              if (_selectedDisableOption == null) {
+                _showError('Please select an option for Disability');
+                return;
+              }
+              setState(() => _currentStep++);
+            }
+          }),
+        ],
+      ),
+    );
+  }
+
+  // Step 4: Marital Status, BPL, Income, and Education
+  Widget _buildScreen4() {
+    return Form(
+      key: _formKeyStep4,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Marital Status'),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+            ),
+            child: Column(
+              children: ['single', 'married', 'divorced'].map((m) {
+                return RadioListTile<String>(
+                  value: m,
+                  title: Text(m),
+                  groupValue: _selectedMaritalStatus,
+                  onChanged: (v) => setState(() => _selectedMaritalStatus = v),
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text('Below Poverty Line?'),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+            ),
+            child: Column(
+              children: [true, false].map((val) {
+                return RadioListTile<bool>(
+                  value: val,
+                  title: Text(val ? 'Yes' : 'No'),
+                  groupValue: _selectedBplOption,
+                  onChanged: (v) => setState(() => _selectedBplOption = v),
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _incomeController,
+            decoration: const InputDecoration(labelText: 'Annual Income'),
+            keyboardType: TextInputType.number,
+            validator: (val) {
+              if (val == null || val.trim().isEmpty) return 'Required';
+              if (double.tryParse(val) == null) return 'Enter a valid number';
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: _selectedEduCategory,
+            decoration: const InputDecoration(labelText: 'Education'),
+            items: _eduCategories
+                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .toList(),
+            onChanged: (val) => setState(() => _selectedEduCategory = val),
+            validator: (val) =>
+            val == null || val.trim().isEmpty ? 'Please select education level' : null,
+          ),
+          const SizedBox(height: 24),
+          Consumer<AuthManager>(
+            builder: (context, authManager, _) {
+              return _gradientButton('Submit', () {
+                if (_formKeyStep4.currentState!.validate()) {
+                  if (_selectedMaritalStatus == null) {
+                    _showError('Please select your marital status');
+                    return;
+                  }
+                  if (_selectedBplOption == null) {
+                    _showError('Please select the BPL option');
+                    return;
+                  }
+                  _onSubmitForm(authManager);
+                }
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Step 5: Success Screen
+  Widget _buildScreen5() {
+    return Column(
+      children: [
+        const Icon(Icons.verified, color: Colors.green, size: 100),
+        const SizedBox(height: 16),
+        const Text('Congratulations!',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        const Text('You are eligible for 13 schemes.'),
+        const SizedBox(height: 24),
+        _gradientButton('Check Schemes', () {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const BottomNav()),
+                (Route<dynamic> route) => false,
+          );
+        }),
       ],
-    );
-  }
-
-
-  Widget _buildGenderOption(String gender) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedGender = gender;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _selectedGender == gender ? Colors.blue : Colors.white,
-            border: Border.all(
-              color: _selectedGender == gender ? Colors.blue : Colors.grey,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            gender,
-            style: TextStyle(
-              color: _selectedGender == gender ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-  Widget _buildMaritalOption(String status) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedGender = status;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _selectedGender == status ? Colors.blue : Colors.white,
-            border: Border.all(
-              color: _selectedGender == status ? Colors.blue : Colors.grey,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            status,
-            style: TextStyle(
-              color: _selectedGender == status ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-  Widget _buildResidenceOption(String residence) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedGender = residence;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _selectedGender == residence ? Colors.blue : Colors.white,
-            border: Border.all(
-              color: _selectedGender == residence ? Colors.blue : Colors.grey,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            residence,
-            style: TextStyle(
-              color: _selectedGender == residence ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-  Widget _buildDisableOption(String disable) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedGender = disable;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _selectedGender == disable ? Colors.blue : Colors.white,
-            border: Border.all(
-              color: _selectedGender == disable ? Colors.blue : Colors.grey,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            disable,
-            style: TextStyle(
-              color: _selectedGender == disable ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-  Widget _buildMinorityOption(String minority) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedGender = minority;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _selectedGender == minority ? Colors.blue : Colors.white,
-            border: Border.all(
-              color: _selectedGender == minority ? Colors.blue : Colors.grey,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            minority,
-            style: TextStyle(
-              color: _selectedGender == minority ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-  Widget _buildBplOption(String bpl) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedGender = bpl;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _selectedGender == bpl ? Colors.blue : Colors.white,
-            border: Border.all(
-              color: _selectedGender == bpl ? Colors.blue : Colors.grey,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            bpl,
-            style: TextStyle(
-              color: _selectedGender == bpl ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

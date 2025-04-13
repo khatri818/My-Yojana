@@ -7,8 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart';
 import 'package:my_yojana/features/home/domain/use_cases/create_bookmark_usecase.dart';
+import 'package:my_yojana/features/home/domain/use_cases/delete_bookmark_usecase.dart';
 import 'package:my_yojana/features/home/domain/use_cases/get_scheme_id_usecase.dart';
 import 'package:my_yojana/features/home/domain/use_cases/get_scheme_uecase.dart';
+import 'package:my_yojana/features/home/domain/use_cases/get_top_rated_scheme_usecase.dart';
 import 'package:my_yojana/features/home/presentation/manager/scheme_manger.dart';
 import 'package:my_yojana/features/user/domain/repositories/user_repository.dart';
 import 'package:my_yojana/features/user/domain/usecases/delete_user_usecase.dart';
@@ -155,6 +157,15 @@ class Injection {
             () => CreateBookmarkUseCase(getIt<SchemeRepository>())
     );
 
+    getIt.registerLazySingleton<DeleteBookmarkUseCase>(
+            () => DeleteBookmarkUseCase(getIt<SchemeRepository>())
+    );
+
+
+    getIt.registerLazySingleton<GetTopRatedSchemeUseCase>(
+            () => GetTopRatedSchemeUseCase(getIt<SchemeRepository>())
+    );
+
 
 
   }
@@ -178,6 +189,8 @@ class Injection {
 
   static SchemeManager get schemeManager =>
       SchemeManager(getSchemeUseCase: getIt<GetSchemeUseCase>(),
+      deleteBookmarkUseCase: getIt<DeleteBookmarkUseCase>(),
+      getTopRatedSchemeUseCase: getIt<GetTopRatedSchemeUseCase>(),
       getSchemeIdUseCase: getIt<GetSchemeIdUseCase>(),
         rateSchemeUseCase: getIt<RateSchemeUseCase>(),
         createBookmarkUseCase: getIt<CreateBookmarkUseCase>(),);

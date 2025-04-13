@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:my_yojana/features/home/domain/use_cases/get_top_rated_scheme_usecase.dart';
 import '../../../../core/enum/status.dart';
 import '../../domain/entities/scheme.dart';
 import '../../domain/use_cases/create_bookmark_usecase.dart';
+import '../../domain/use_cases/delete_bookmark_usecase.dart';
 import '../../domain/use_cases/get_scheme_id_usecase.dart';
 import '../../domain/use_cases/get_scheme_uecase.dart';
 import '../../domain/use_cases/rate_scheme_usecase.dart';
@@ -13,15 +15,28 @@ class SchemeManager with ChangeNotifier {
   final GetSchemeIdUseCase _getSchemeIdUseCase;
   final RateSchemeUseCase _rateSchemeUseCase;
   final CreateBookmarkUseCase _createBookmarkUseCase;
+  final DeleteBookmarkUseCase _deleteBookmarkUseCase;
+  final GetTopRatedSchemeUseCase _getTopRatedSchemeUseCase;
+
+  List<Scheme>? _topRatedSchemes;
+  List<Scheme>? get topRatedSchemes => _topRatedSchemes;
+
+  Status _topRatedSchemeStatus = Status.init;
+  Status get topRatedSchemeStatus => _topRatedSchemeStatus;
+
 
   SchemeManager({
     required CreateBookmarkUseCase createBookmarkUseCase,
+    required DeleteBookmarkUseCase deleteBookmarkUseCase,
     required GetSchemeUseCase getSchemeUseCase,
     required GetSchemeIdUseCase getSchemeIdUseCase,
     required RateSchemeUseCase rateSchemeUseCase,
+    required GetTopRatedSchemeUseCase getTopRatedSchemeUseCase,
   })  : _createBookmarkUseCase = createBookmarkUseCase,
+        _deleteBookmarkUseCase = deleteBookmarkUseCase,
         _getSchemeUseCase = getSchemeUseCase,
         _getSchemeIdUseCase = getSchemeIdUseCase,
+        _getTopRatedSchemeUseCase = getTopRatedSchemeUseCase,
         _rateSchemeUseCase = rateSchemeUseCase;
 
   int _page = 1;
@@ -59,6 +74,10 @@ class SchemeManager with ChangeNotifier {
 
   Status _schemeBookmarkStatus = Status.init;
   Status get schemeBookmarkStatus => _schemeBookmarkStatus;
+
+  Status _schemeDeleteBookmarkStatus = Status.init;
+  Status get schemeDeleteBookmarkStatus => _schemeDeleteBookmarkStatus;
+
 
 
   void _notify() {
@@ -172,6 +191,25 @@ class SchemeManager with ChangeNotifier {
     }
   }
 
+  Future<void> getTopRatedScheme() async {
+    _topRatedSchemeStatus = Status.loading;
+    notifyListeners();
+
+    final result = await _getTopRatedSchemeUseCase();
+
+    result.fold(
+          (failure) {
+        _topRatedSchemeStatus = Status.failure;
+        _topRatedSchemes = null;
+        notifyListeners();
+      },
+          (schemes) {
+        _topRatedSchemes = schemes;
+        _topRatedSchemeStatus = Status.success;
+        notifyListeners();
+      },
+    );
+  }
 
   /// Submits a rating for a scheme
   Future<String?> rateScheme({
@@ -210,6 +248,38 @@ class SchemeManager with ChangeNotifier {
       return "Something went wrong: \${e.toString()}";
     }
   }
+
+  Future<String?> deleteBookmark({
+    required String firebaseId,
+    required int bookmarkId,
+  }) async {
+    try {
+      _schemeDeleteBookmarkStatus = Status.loading;
+      notifyListeners();
+
+      final result = await _deleteBookmarkUseCase(firebaseId: firebaseId, bookmarkId: bookmarkId);
+
+      final response = result.fold(
+            (failure) {
+          _schemeDeleteBookmarkStatus = Status.failure;
+          notifyListeners();
+          return failure.message;
+        },
+            (success) {
+          _schemeDeleteBookmarkStatus = Status.success;
+          notifyListeners();
+          return null;
+        },
+      );
+
+      return response;
+    } catch (e) {
+      _schemeDeleteBookmarkStatus = Status.failure;
+      notifyListeners();
+      return "Something went wrong: ${e.toString()}";
+    }
+  }
+
 
   /// Backward-compatible setter that populates and fetches schemes
   void setFilter(

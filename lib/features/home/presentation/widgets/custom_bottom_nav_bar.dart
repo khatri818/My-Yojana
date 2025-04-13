@@ -1,5 +1,5 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-
 import 'bottom_nav_item.dart';
 
 class CustomBottomAppBar extends StatelessWidget {
@@ -7,23 +7,50 @@ class CustomBottomAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate the desired height based on screen height
     double screenHeight = MediaQuery.of(context).size.height;
-    double appBarHeight = screenHeight * 0.1; // Adjust this multiplier as needed
+    double appBarHeight = screenHeight * 0.1;
 
-    return BottomAppBar(
-      height: appBarHeight,
-      padding: EdgeInsets.zero,
-      color: Colors.white70,
-      shape: const CircularNotchedRectangle(),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          BottomNavItem(index: 0, icon: Icons.home_outlined, label: 'Home'),
-          BottomNavItem(index: 1, icon: Icons.bookmarks_outlined, label: 'Bookmark'),
-          BottomNavItem(index: 2, icon: Icons.update_sharp, label: 'Schemes'),
-          BottomNavItem(index: 3, icon: Icons.person_pin, label: 'My Profile'),
-        ],
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(16),
+        topRight: Radius.circular(16),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+        child: Container(
+          height: appBarHeight,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF2575FC).withOpacity(0.12), // Lighter blue
+                const Color(0xFF6A11CB).withOpacity(0.12), // Lighter violet
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: const Border(
+              top: BorderSide(color: Colors.transparent, width: 0),
+            ),
+          ),
+          child: const Row(
+            children: [
+              Expanded(
+                child: BottomNavItem(
+                  index: 0,
+                  icon: Icons.home_outlined,
+                  label: 'Home',
+                ),
+              ),
+              Expanded(
+                child: BottomNavItem(
+                  index: 1,
+                  icon: Icons.bookmarks_outlined,
+                  label: 'Bookmark',
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

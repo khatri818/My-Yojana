@@ -11,10 +11,12 @@ abstract class SchemeRepository {
     required bool minority,
     required bool bpl_category});
 
+  AppTypeResponse<List<Scheme>> getTopRatedScheme();
   AppTypeResponse<Scheme> getSchemeId({required int schemeId});
 
   AppSuccessResponse rateScheme({required int schemeId, required int userId,
     required double rating});
 
   AppSuccessResponse createBookmark({required String firebaseId, required int schemeId});
+  AppSuccessResponse deleteBookmark({required String firebaseId, required int bookmarkId});
 }

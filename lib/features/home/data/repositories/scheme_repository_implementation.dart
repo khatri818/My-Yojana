@@ -27,6 +27,9 @@ class SchemeRepositoryImplementation extends SchemeRepository {
       bpl_category: bpl_category);
 
   @override
+  AppTypeResponse<List<Scheme>> getTopRatedScheme() => _schemeDataSource.getTopRatedScheme();
+
+  @override
   AppTypeResponse<Scheme> getSchemeId({required int schemeId}) => _schemeDataSource.getSchemeId(
       schemeId: schemeId);
 
@@ -36,5 +39,8 @@ class SchemeRepositoryImplementation extends SchemeRepository {
 
   @override
   AppSuccessResponse createBookmark({required String firebaseId, required int schemeId}) => _schemeDataSource.createBookmark(firebaseId: firebaseId, schemeId: schemeId);
+
+  @override
+  AppSuccessResponse deleteBookmark({required String firebaseId, required int bookmarkId}) => _schemeDataSource.deleteBookmark(firebaseId: firebaseId, bookmarkId: bookmarkId);
 
 }

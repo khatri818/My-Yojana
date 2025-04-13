@@ -67,6 +67,48 @@ class SchemeDataSourceImplementation extends SchemeDataSource {
   }
 
   @override
+  AppTypeResponse<List<Scheme>> getTopRatedScheme() async {
+    try {
+      final response = await _http.get(
+        path: Api.getTopRatedScheme(),
+      );
+
+      return response.fold((l) {
+        return Left(ErrorMessage(message: l.message));
+      }, (result) {
+        final statusCode = result.statusCode;
+        final data = result.data;
+
+        if (statusCode == null || statusCode >= 400) {
+          return Left(ErrorMessage(
+              message: data['error'] ?? 'Something went wrong!'));
+        }
+
+        final rawList = data['top_rated_schemes'];
+        if (rawList == null || rawList is! List) {
+          return Left(ErrorMessage(message: 'Invalid or missing top-rated schemes data.'));
+        }
+
+        final List<Scheme> schemes = rawList
+            .map((schemeJson) => SchemeModel.fromJson(schemeJson))
+            .toList()
+            .cast<Scheme>();
+
+        return Right(schemes);
+      });
+    } catch (e) {
+      LogUtility.error('Get Scheme Error : $e');
+      return Left(
+        ErrorMessage(
+          message: e.toString(),
+        ),
+      );
+    }
+  }
+
+
+
+  @override
   AppTypeResponse<Scheme> getSchemeId({required int schemeId}) async {
     try {
       final response = await _http.get(
@@ -146,12 +188,54 @@ class SchemeDataSourceImplementation extends SchemeDataSource {
     try {
       final body = {
         "firebase_id": firebaseId,
-        'schem_id': schemeId,
+        'scheme_id': schemeId,
       };
       LogUtility.info('Bookmark body: $body');
 
       final response = await _http.post(
         path: Api.createBookmark(),
+        data: body,
+      );
+
+      return response.fold((l) {
+        return Left(ErrorMessage(message: l.message));
+      }, (result) async {
+        final statusCode = result.statusCode;
+        final data = result.data;
+
+        if (statusCode == null || statusCode >= 400) {
+          return Left(ErrorMessage(
+            message: data['message'] ?? data['error'] ?? 'Bookmark creation failed.',
+          ));
+        }
+
+        return Right(SuccessMessage(
+          message: data['message'] ?? 'Bookmark created successfully.',
+        ));
+      });
+    } catch (e) {
+      LogUtility.error('Create Bookmark Error: $e');
+      return Left(
+        ErrorMessage(
+          message: e.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
+  AppSuccessResponse deleteBookmark({
+    required String firebaseId,
+    required int bookmarkId,
+  }) async {
+    try {
+      final body = {
+        "firebase_id": firebaseId,
+      };
+      LogUtility.info('Bookmark body: $body');
+
+      final response = await _http.delete(
+        path: Api.deleteBookmark(bookmarkId),
         data: body,
       );
 

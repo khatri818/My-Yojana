@@ -40,13 +40,18 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController _dobController = TextEditingController();
 
   final List<String> _schemeCategories = [
-    'Education',
-    'Scholarship',
-    'Hospital',
-    'Agriculture',
+    'Health',
     'Insurance',
+    'Employment',
+    'Agriculture',
     'Housing',
-    'Fund support'
+    'Financial Assistance',
+    'Safety',
+    'Subsidy',
+    'Education',
+    'Pension',
+    'Business',
+    'Loan'
   ];
   final List<String> _eduCategories = [
     'Below 10th',
@@ -196,7 +201,7 @@ class _SearchPageState extends State<SearchPage> {
           filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.72),
+              color: Colors.white.withOpacity(0.9),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             ),
             child: DraggableScrollableSheet(
