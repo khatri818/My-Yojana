@@ -4,12 +4,14 @@ import 'package:my_yojana/features/home/presentation/pages/search_screen.dart';
 import 'package:provider/provider.dart';
 import '../../../../common/app_colors.dart';
 import '../../../../constant/image_resource.dart';
+import '../../../../core/enum/status.dart';
 import '../../../auth/presentation/manager/auth_manger.dart';
 import '../../../user/presentation/manager/user_manager.dart';
 import '../manager/bottom_nav_manager.dart';
 import '../manager/scheme_manger.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
+import 'bookmark_screen.dart';
 import 'home_screen.dart';
 
 class BottomNav extends StatefulWidget {
@@ -20,15 +22,18 @@ class BottomNav extends StatefulWidget {
 }
 
 class _BottomNavState extends State<BottomNav> {
+  bool _hasFetched = false; // ✅ Prevent repeated API calls
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchUser();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchUserAndSchemes());
   }
 
-  Future<void> _fetchUser() async {
+  Future<void> _fetchUserAndSchemes() async {
+    if (_hasFetched) return; // ✅ Avoid fetching again
+    _hasFetched = true;
+
     try {
       final authManager = context.read<AuthManager>();
       final userSession = await authManager.checkUser();
@@ -38,7 +43,14 @@ class _BottomNavState extends State<BottomNav> {
         final schemeManager = context.read<SchemeManager>();
 
         await userManager.getUser(userSession.token);
-        await schemeManager.getScheme();
+
+        final schemeList = schemeManager.scheme;
+        final schemeStatus = schemeManager.schemeLoadingStatus;
+
+        if (schemeStatus != Status.loading &&
+            (schemeList == null || schemeList.isEmpty)) {
+          await schemeManager.getScheme(showLoading: true);
+        }
       } else {
         debugPrint('User session is null');
       }
@@ -90,7 +102,7 @@ class _BottomNavState extends State<BottomNav> {
             index: provider.selectedIndex,
             children: const [
               HomePage(),
-              HomePage(), // Replace with BookmarkPage when available
+              BookmarkPage(),
             ],
           );
         },
@@ -123,7 +135,9 @@ class _BottomNavState extends State<BottomNav> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const SearchPage(isMatchScheme: false)),
+                MaterialPageRoute(
+                  builder: (_) => const SearchPage(isMatchScheme: false),
+                ),
               );
             },
             child: const Center(

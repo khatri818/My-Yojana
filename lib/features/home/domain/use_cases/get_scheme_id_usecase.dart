@@ -7,6 +7,6 @@ class GetSchemeIdUseCase {
 
   GetSchemeIdUseCase(this._schemeRepository);
 
-  AppTypeResponse<Scheme> call({required int schemeId}) => _schemeRepository.getSchemeId(schemeId : schemeId);
+  AppTypeResponse<Scheme> call({required int schemeId, required String firebaseId}) => _schemeRepository.getSchemeId(schemeId : schemeId, firebaseId: firebaseId);
 
 }

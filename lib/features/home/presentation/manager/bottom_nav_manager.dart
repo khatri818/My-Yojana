@@ -10,4 +10,3 @@ class BottomNavProvider with ChangeNotifier {
     notifyListeners();
   }
 }
-

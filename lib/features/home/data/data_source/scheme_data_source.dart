@@ -1,8 +1,11 @@
+import 'package:my_yojana/features/home/domain/entities/bookmark.dart';
+
 import '../../../../core/utils/type_def.dart';
 import '../../domain/entities/scheme.dart';
 
 abstract class SchemeDataSource {
   AppTypeResponse<List<Scheme>> getScheme({required int page,
+    required String query,
     required String category,
     required String gender,
     required String city,
@@ -13,7 +16,7 @@ abstract class SchemeDataSource {
 
   AppTypeResponse<List<Scheme>> getTopRatedScheme();
 
-  AppTypeResponse<Scheme> getSchemeId({required int schemeId});
+  AppTypeResponse<Scheme> getSchemeId({required int schemeId, required String firebaseId});
 
   AppSuccessResponse rateScheme({required int schemeId,required int userId,
     required double rating,});
@@ -21,4 +24,6 @@ abstract class SchemeDataSource {
   AppSuccessResponse createBookmark({required String firebaseId,required int schemeId});
 
   AppSuccessResponse deleteBookmark({required String firebaseId,required int bookmarkId});
+
+  AppTypeResponse<List<Bookmark>> getBookmark({required int userId, required int page});
 }

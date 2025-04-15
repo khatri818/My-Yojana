@@ -96,7 +96,7 @@ class SchemeModel extends Scheme {
           : null,
       averagerating: map['average_rating'],
       totalrating: map['total_ratings'],
-      isBookmarked: map['isBookmarked'],
+      isBookmarked: map['bookmark_id'],
       userRating: map['user_rating'],
     );
   }
@@ -130,7 +130,7 @@ class SchemeModel extends Scheme {
       'keywords': keywords,
       'average_rating': averagerating,
       'total_ratings': totalrating,
-      'isBookmarked': isBookmarked,
+      'bookmark_id': isBookmarked,
       'user_rating': userRating,
     };
   }

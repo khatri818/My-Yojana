@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:my_yojana/features/home/data/data_source/scheme_data_source.dart';
+import 'package:my_yojana/features/home/domain/entities/bookmark.dart';
 import '../../../../api/api.dart';
 import '../../../../core/error/app_error.dart';
 import '../../../../core/error/app_success.dart';
@@ -7,6 +8,7 @@ import '../../../../core/utils/http_utils.dart';
 import '../../../../core/utils/log_utility.dart';
 import '../../../../core/utils/type_def.dart';
 import '../../domain/entities/scheme.dart';
+import '../models/bookmark_model.dart';
 import '../models/scheme_model.dart';
 
 class SchemeDataSourceImplementation extends SchemeDataSource {
@@ -16,6 +18,7 @@ class SchemeDataSourceImplementation extends SchemeDataSource {
 
   @override
   AppTypeResponse<List<Scheme>> getScheme({
+    required String query,
     required int page,
     required String category,
     required String gender,
@@ -28,6 +31,7 @@ class SchemeDataSourceImplementation extends SchemeDataSource {
     try {
       final response = await _http.get(
           path: Api.getScheme(
+              query: query,
               page: page,
               category: category,
               gender: gender,
@@ -63,6 +67,47 @@ class SchemeDataSourceImplementation extends SchemeDataSource {
           message: e.toString(),
         ),
       );
+    }
+  }
+
+  @override
+  AppTypeResponse<List<Bookmark>> getBookmark({
+    required int userId,
+    required int page,
+  }) async {
+    try {
+      final response = await _http.get(
+        path: Api.getBookmark(userId, page),
+      );
+
+      return response.fold((l) {
+        return Left(ErrorMessage(message: l.message));
+      }, (result) {
+        final statusCode = result.statusCode;
+        final data = result.data;
+
+        if (statusCode == null || statusCode >= 400) {
+          return Left(
+            ErrorMessage(message: data['error'] ?? 'Something went wrong!'),
+          );
+        }
+
+        final rawList = data['bookmarks'];
+        if (rawList == null || rawList is! List) {
+          return const Left(
+            ErrorMessage(message: 'Invalid or missing bookmark data.'),
+          );
+        }
+
+        final List<Bookmark> bookmarks = (data['bookmarks'] as List)
+            .map((bookmarkJson) => BookmarkModel.fromJson(bookmarkJson).toEntity())
+            .toList();
+
+        return Right(bookmarks);
+      });
+    } catch (e) {
+      LogUtility.error('Get Bookmarks Error: $e');
+      return Left(ErrorMessage(message: e.toString()));
     }
   }
 
@@ -109,10 +154,12 @@ class SchemeDataSourceImplementation extends SchemeDataSource {
 
 
   @override
-  AppTypeResponse<Scheme> getSchemeId({required int schemeId}) async {
+  AppTypeResponse<Scheme> getSchemeId({required int schemeId, required String firebaseId}) async {
     try {
+
+
       final response = await _http.get(
-        path: Api.getSchemeId(schemeId),
+        path: Api.getSchemeId(schemeId,firebaseId),
       );
 
       return response.fold((l) {

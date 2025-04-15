@@ -1,6 +1,7 @@
+// No changes to imports
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/enum/status.dart';
@@ -32,7 +33,7 @@ class _SearchPageState extends State<SearchPage> {
   bool _selectedBplOption = false;
   String? _selectedResidenceType;
 
-  bool _isMatchProfileEnabled = false; // ✅ Persistent state
+  bool _isMatchProfileEnabled = false;
 
   final TextEditingController _occupationController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
@@ -40,18 +41,9 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController _dobController = TextEditingController();
 
   final List<String> _schemeCategories = [
-    'Health',
-    'Insurance',
-    'Employment',
-    'Agriculture',
-    'Housing',
-    'Financial Assistance',
-    'Safety',
-    'Subsidy',
-    'Education',
-    'Pension',
-    'Business',
-    'Loan'
+    'Health', 'Insurance', 'Employment', 'Agriculture',
+    'Housing', 'Financial Assistance', 'Safety', 'Subsidy',
+    'Education', 'Pension', 'Business', 'Loan'
   ];
   final List<String> _eduCategories = [
     'Below 10th',
@@ -60,7 +52,7 @@ class _SearchPageState extends State<SearchPage> {
   ];
   final List<String> _genders = ['male', 'female', 'other'];
   final List<String> _maritalStatus = ['single', 'married', 'widowed'];
-  final List<String> _residenceTypes = ['Rural', 'Urban', 'Semi-Urban'];
+  final List<String> _residenceTypes = ['Rural', 'Urban', 'Semi-urban'];
 
   @override
   void initState() {
@@ -71,23 +63,17 @@ class _SearchPageState extends State<SearchPage> {
     final schemeManager = context.read<SchemeManager>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-
-
       if (widget.isMatchScheme) {
-        setState(() {
-          _isMatchProfileEnabled = true;
-        });
+        setState(() => _isMatchProfileEnabled = true);
         _prefillUserData(userManager);
         _onFilter();
       } else {
-        schemeManager.resetState();
         _clearFilters();
+        schemeManager.resetState();
         schemeManager.getScheme(showLoading: true);
       }
     });
   }
-
-
 
   @override
   void dispose() {
@@ -126,6 +112,9 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _clearFilters() {
+    final schemeManager = context.read<SchemeManager>();
+    schemeManager.clearFilters();
+
     setState(() {
       _selectedGender = null;
       _selectedCategory = null;
@@ -139,11 +128,12 @@ class _SearchPageState extends State<SearchPage> {
       _cityController.clear();
       _incomeController.clear();
       _dobController.clear();
-      _isMatchProfileEnabled = false; // ✅ reset here
+      _isMatchProfileEnabled = false;
     });
   }
 
-  void _prefillUserData(UserManager manager, [void Function(void Function())? setModalState]) {
+  void _prefillUserData(UserManager manager,
+      [void Function(void Function())? setModalState]) {
     final user = manager.user;
     if (user == null) return;
 
@@ -165,7 +155,6 @@ class _SearchPageState extends State<SearchPage> {
     });
   }
 
-
   void _startListening() async {
     bool available = await _speech.initialize(
       onStatus: (status) {
@@ -174,7 +163,7 @@ class _SearchPageState extends State<SearchPage> {
           _speech.stop();
         }
       },
-      onError: (error) => setState(() => _isListening = false),
+      onError: (_) => setState(() => _isListening = false),
     );
     if (available) {
       setState(() => _isListening = true);
@@ -202,7 +191,8 @@ class _SearchPageState extends State<SearchPage> {
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.9),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28)),
             ),
             child: DraggableScrollableSheet(
               expand: false,
@@ -218,7 +208,8 @@ class _SearchPageState extends State<SearchPage> {
                     }
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 10.0),
                       child: ListView(
                         controller: scrollController,
                         children: [
@@ -226,18 +217,25 @@ class _SearchPageState extends State<SearchPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text("Filter Schemes",
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold, color: Colors.blue[800])),
+                                  style: Theme
+                                      .of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue[800])),
                               TextButton.icon(
                                 onPressed: () {
                                   _clearFilters();
                                   setModalState(() {});
                                   _onFilter();
                                 },
-                                icon: const Icon(Icons.clear_all, color: Colors.redAccent),
+                                icon: const Icon(
+                                    Icons.clear_all, color: Colors.redAccent),
                                 label: const Text("Clear Filters",
                                     style: TextStyle(
-                                        color: Colors.redAccent, fontWeight: FontWeight.w600)),
+                                        color: Colors.redAccent,
+                                        fontWeight: FontWeight.w600)),
                               ),
                             ],
                           ),
@@ -246,58 +244,62 @@ class _SearchPageState extends State<SearchPage> {
                             contentPadding: EdgeInsets.zero,
                             activeColor: Colors.blueAccent,
                             title: const Text("Match My Profile"),
-                            subtitle: const Text("Auto-fill filters using your saved profile"),
+                            subtitle: const Text(
+                                "Auto-fill filters using your saved profile"),
                             value: _isMatchProfileEnabled,
                             onChanged: (val) {
                               setModalState(() => _isMatchProfileEnabled = val);
                               setState(() {});
                               if (val) {
                                 _prefillUserData(userManager, setModalState);
-                                Future.delayed(const Duration(milliseconds: 200), _onFilter);
+                                Future.delayed(
+                                    const Duration(milliseconds: 200),
+                                    _onFilter);
                               }
                             },
                           ),
                           const Divider(height: 28),
-
-                          _buildDropdown("Gender", _selectedGender, _genders, (val) {
+                          _buildDropdown(
+                              "Gender", _selectedGender, _genders, (val) {
                             turnOffMatchProfile();
                             setModalState(() => _selectedGender = val);
                           }),
                           const SizedBox(height: 16),
-                          _buildDropdown("Scheme Category", _selectedCategory, _schemeCategories,
-                                  (val) {
+                          _buildDropdown("Scheme Category", _selectedCategory,
+                              _schemeCategories, (val) {
                                 turnOffMatchProfile();
                                 setModalState(() => _selectedCategory = val);
                               }),
                           const SizedBox(height: 16),
-                          _buildDropdown("Education Level", _selectedEduCategory, _eduCategories,
-                                  (val) {
-                                turnOffMatchProfile();
-                                setModalState(() => _selectedEduCategory = val);
-                              }),
+                          _buildDropdown(
+                              "Education Level", _selectedEduCategory,
+                              _eduCategories, (val) {
+                            turnOffMatchProfile();
+                            setModalState(() => _selectedEduCategory = val);
+                          }),
                           const SizedBox(height: 16),
-                          _buildDropdown("Marital Status", _selectedMaritalStatus, _maritalStatus,
-                                  (val) {
-                                turnOffMatchProfile();
-                                setModalState(() => _selectedMaritalStatus = val);
-                              }),
+                          _buildDropdown(
+                              "Marital Status", _selectedMaritalStatus,
+                              _maritalStatus, (val) {
+                            turnOffMatchProfile();
+                            setModalState(() => _selectedMaritalStatus = val);
+                          }),
                           const SizedBox(height: 16),
-                          _buildDropdown("Residence Type", _selectedResidenceType, _residenceTypes,
-                                  (val) {
-                                turnOffMatchProfile();
-                                setModalState(() => _selectedResidenceType = val);
-                              }),
-
-                          const SizedBox(height: 24),
-                          const Divider(height: 24),
-
+                          _buildDropdown(
+                              "Residence Type", _selectedResidenceType,
+                              _residenceTypes, (val) {
+                            turnOffMatchProfile();
+                            setModalState(() => _selectedResidenceType = val);
+                          }),
+                          const Divider(height: 28),
                           SwitchListTile.adaptive(
                             title: const Text("Are you from a minority group?"),
                             activeColor: Colors.blueAccent,
                             value: _selectedMinorityOption,
                             onChanged: (val) {
                               turnOffMatchProfile();
-                              setModalState(() => _selectedMinorityOption = val);
+                              setModalState(() =>
+                              _selectedMinorityOption = val);
                             },
                           ),
                           SwitchListTile.adaptive(
@@ -318,47 +320,48 @@ class _SearchPageState extends State<SearchPage> {
                               setModalState(() => _selectedBplOption = val);
                             },
                           ),
-                          const SizedBox(height: 24),
-                          const Divider(height: 24),
-
+                          const Divider(height: 28),
                           _buildTextField("Occupation", _occupationController,
                               onChanged: (_) => turnOffMatchProfile()),
                           _buildTextField("City", _cityController,
                               onChanged: (_) => turnOffMatchProfile()),
-                          _buildTextField("Income", _incomeController,
-                              isNumber: true, onChanged: (_) => turnOffMatchProfile()),
+                          _buildTextField(
+                              "Income", _incomeController, isNumber: true,
+                              onChanged: (_) => turnOffMatchProfile()),
                           const SizedBox(height: 12),
                           TextField(
                             controller: _dobController,
                             readOnly: true,
                             decoration: InputDecoration(
                               labelText: 'Date of Birth',
-                              prefixIcon: const Icon(Icons.calendar_today_outlined),
+                              prefixIcon: const Icon(
+                                  Icons.calendar_today_outlined),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                                  borderRadius: BorderRadius.circular(12)),
                             ),
                             onTap: () async {
                               turnOffMatchProfile();
                               final picked = await showDatePicker(
                                 context: context,
-                                initialDate: DateTime.now().subtract(const Duration(days: 6570)),
+                                initialDate: DateTime.now().subtract(
+                                    const Duration(days: 6570)),
                                 firstDate: DateTime(1900),
                                 lastDate: DateTime.now(),
                               );
                               if (picked != null) {
                                 setModalState(() {
                                   _dobController.text =
-                                  "${picked.day}/${picked.month}/${picked.year}";
+                                  "${picked.day}/${picked.month}/${picked
+                                      .year}";
                                 });
                               }
                             },
                           ),
                           const SizedBox(height: 30),
-
                           ElevatedButton.icon(
                             icon: const Icon(Icons.filter_alt_outlined),
-                            label: const Text("Apply Filters", style: TextStyle(fontSize: 16)),
+                            label: const Text("Apply Filters",
+                                style: TextStyle(fontSize: 16)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blueAccent,
                               foregroundColor: Colors.white,
@@ -385,15 +388,18 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildDropdown(String label, String? value, List<String> options, ValueChanged<String?> onChanged) {
+  Widget _buildDropdown(String label, String? value, List<String> options,
+      ValueChanged<String?> onChanged) {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12, vertical: 14),
       ),
       value: value,
-      items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+      items: options.map((e) => DropdownMenuItem(value: e, child: Text(e)))
+          .toList(),
       onChanged: onChanged,
     );
   }
@@ -418,64 +424,24 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search Schemes'),
-        backgroundColor: Colors.blueAccent,
+        title: Text(
+          'Search Schemes',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
+        ),
+        backgroundColor: const Color(0xFF004AAD),
         foregroundColor: Colors.white,
+        elevation: 4,
+        shadowColor: Colors.black26,
       ),
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFF4F6FA),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Material(
-              elevation: 3,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Colors.grey),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: _onSearch,
-                        style: const TextStyle(color: Colors.black87),
-                        decoration: const InputDecoration(
-                          hintText: 'Enter Scheme Name...',
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        if (_isListening) {
-                          _speech.stop();
-                          setState(() => _isListening = false);
-                        } else {
-                          _startListening();
-                        }
-                      },
-                      child: SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: _isListening
-                            ? Lottie.asset('assets/animations/mic_listening.json')
-                            : const Icon(Icons.mic_none, color: Colors.grey),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.filter_list, color: Colors.grey),
-                      onPressed: _showFilterOptions,
-                    )
-                  ],
-                ),
-              ),
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
+            child: _buildSearchBar(),
           ),
           Expanded(
             child: Consumer<SchemeManager>(
@@ -485,7 +451,15 @@ class _SearchPageState extends State<SearchPage> {
                     (schemes == null || schemes.isEmpty)) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (schemes == null || schemes.isEmpty) {
-                  return const Center(child: Text('Nothing to show here.'));
+                  return Center(
+                    child: Text(
+                      'Nothing to show here.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  );
                 }
                 return RefreshIndicator(
                   onRefresh: () async {
@@ -495,6 +469,7 @@ class _SearchPageState extends State<SearchPage> {
                   child: ListView.builder(
                     controller: _scrollController,
                     itemCount: schemes.length + 1,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     itemBuilder: (context, index) {
                       if (index == schemes.length) {
                         return schemeManager.hasMoreData
@@ -504,8 +479,7 @@ class _SearchPageState extends State<SearchPage> {
                         )
                             : const SizedBox.shrink();
                       }
-                      final scheme = schemes[index];
-                      return SchemeItem(scheme: scheme);
+                      return SchemeItem(scheme: schemes[index]);
                     },
                   ),
                 );
@@ -513,6 +487,75 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        elevation: 0,
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              const Icon(Icons.search, color: Color(0xFF004AAD)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _onSearch,
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    color: Colors.black87,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search for schemes...',
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey.shade500,
+                    ),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  if (_isListening) {
+                    _speech.stop();
+                    setState(() => _isListening = false);
+                  } else {
+                    _startListening();
+                  }
+                },
+                child: SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: _isListening
+                      ? Lottie.asset('assets/animations/mic_listening.json')
+                      : const Icon(Icons.mic_none, color: Colors.grey),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                    Icons.filter_alt_rounded, color: Color(0xFF004AAD)),
+                onPressed: _showFilterOptions,
+              )
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -1,18 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../user/presentation/manager/user_manager.dart';
 import '../../domain/entities/scheme.dart';
 import 'scheme_card_style.dart';
 import '../pages/scheme_detail_page.dart';
+import '../../../auth/presentation/manager/auth_manger.dart';
 
-class SchemeItem extends StatelessWidget {
-  const SchemeItem({
-    super.key,
-    required this.scheme,
-  });
-
+class SchemeItem extends StatefulWidget {
+  const SchemeItem({super.key, required this.scheme});
   final Scheme scheme;
 
   @override
+  State<SchemeItem> createState() => _SchemeItemState();
+}
+
+class _SchemeItemState extends State<SchemeItem> {
+  String firebaseId = '';
+  int userId = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFirebaseId();
+  }
+
+  // Load the Firebase ID and User ID dynamically
+  Future<void> _loadFirebaseId() async {
+    final authManager = context.read<AuthManager>();
+    final userIdFromManager = context.read<UserManager>().user?.id;
+    final session = await authManager.checkUser();
+
+    if (!mounted) return;
+
+    setState(() {
+      firebaseId = session?.token ?? '';
+      userId = userIdFromManager ?? 0;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final scheme = widget.scheme;
+
     final String name = scheme.schemeName ?? 'Unknown Scheme';
     final String category = scheme.category ?? 'Uncategorized';
     final String description = scheme.description ?? 'No description available';
@@ -30,7 +59,11 @@ class SchemeItem extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => SchemeDetailPage(schemeId: scheme.id!),
+                builder: (context) => SchemeDetailPage(
+                  schemeId: scheme.id!,
+                  firebaseId: firebaseId,
+                  userId: userId,
+                ),
               ),
             );
           },

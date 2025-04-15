@@ -16,7 +16,7 @@ class CustomBottomAppBar extends StatelessWidget {
         topRight: Radius.circular(16),
       ),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+        filter: ImageFilter.blur(sigmaX: 1000.0, sigmaY: 1000.0),
         child: Container(
           height: appBarHeight,
           decoration: BoxDecoration(

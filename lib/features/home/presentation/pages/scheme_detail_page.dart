@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,12 +8,14 @@ import '../../domain/entities/scheme.dart';
 import '../manager/scheme_manger.dart';
 import '../widgets/scheme_card_style.dart';
 import '../../../../core/enum/status.dart';
-import '../../../user/presentation/manager/user_manager.dart'; // ✅ Import UserManager
+import '../../../user/presentation/manager/user_manager.dart';
 
 class SchemeDetailPage extends StatefulWidget {
   final int schemeId;
+  final String firebaseId;
+  final int userId;
 
-  const SchemeDetailPage({super.key, required this.schemeId});
+  const SchemeDetailPage({super.key, required this.schemeId, required this.firebaseId, required this.userId});
 
   @override
   State<SchemeDetailPage> createState() => _SchemeDetailPageState();
@@ -20,8 +24,8 @@ class SchemeDetailPage extends StatefulWidget {
 class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerProviderStateMixin {
   Scheme? scheme;
   late TabController _tabController;
-  bool isBookmarked = false;
   double? _userRating;
+  bool _isEditingRating = false;
 
   @override
   void initState() {
@@ -32,10 +36,15 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
 
   Future<void> _fetchSchemeDetails() async {
     final schemeManager = context.read<SchemeManager>();
-    final result = await schemeManager.getSchemeId(widget.schemeId);
-    setState(() {
-      scheme = result;
-      _userRating = result?.userRating;
+    final result = await schemeManager.getSchemeId(widget.schemeId, widget.firebaseId);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          scheme = result;
+          _userRating = result?.userRating;
+        });
+      }
     });
   }
 
@@ -48,10 +57,7 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     final schemeManager = context.watch<SchemeManager>();
-    final isSubmittingRating = schemeManager.schemeRatingStatus == Status.loading;
-
     final userManager = context.watch<UserManager>();
-    final userId = userManager.user?.id ?? 0;
 
     if (scheme == null) {
       return const Scaffold(
@@ -81,18 +87,69 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
         ),
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: Icon(
-              isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              setState(() => isBookmarked = !isBookmarked);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(isBookmarked ? 'Bookmarked' : 'Removed from Bookmarks'),
-                  duration: const Duration(seconds: 2),
+          Consumer<SchemeManager>(
+            builder: (context, schemeManager, _) {
+              return IconButton(
+                icon: Icon(
+                  scheme!.isBookmarked != null ? Icons.bookmark : Icons.bookmark_outline,
+                  color: Colors.white,
                 ),
+                onPressed: () async {
+                  String? error;
+                  final isBookmarking = scheme!.isBookmarked == null;
+
+                  if (isBookmarking) {
+                    error = await schemeManager.createBookmark(
+                      firebaseId: widget.firebaseId,
+                      schemeId: widget.schemeId,
+                      userId: widget.userId,
+                    );
+                  } else {
+                    error = await schemeManager.deleteBookmark(
+                      userId: widget.userId,
+                      firebaseId: widget.firebaseId,
+                      bookmarkId: scheme!.isBookmarked!,
+                    );
+                  }
+
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(
+                            error != null ? Icons.error_outline : (isBookmarking ? Icons.bookmark_added : Icons.bookmark_remove),
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              error != null
+                                  ? "Error: $error"
+                                  : (isBookmarking ? "Scheme bookmarked" : "Bookmark removed"),
+                              style: const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: error != null
+                          ? Colors.redAccent
+                          : (isBookmarking ? Colors.green.shade600 : Colors.orange.shade700),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      duration: const Duration(seconds: 3),
+                      elevation: 6,
+                    ),
+                  );
+
+                  if (error == null) {
+                    await _fetchSchemeDetails();
+                  }
+                },
               );
             },
           )
@@ -111,166 +168,225 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
             ),
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: gradient,
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                _buildHeader(context, gradient, icon),
+                _buildTabs(gradient),
+                _buildTabContent(formatter),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, List<Color> gradient, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.topRight,
+            child: SchemeCardStyle.buildBackgroundIcon(category: scheme!.category ?? ''),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                scheme!.schemeName ?? '',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              const SizedBox(height: 8),
+              _buildRating(),
+              const SizedBox(height: 12),
+              Chip(
+                avatar: Icon(icon, color: gradient.first, size: 18),
+                label: Text(
+                  scheme!.category ?? '',
+                  style: TextStyle(color: gradient.first, fontWeight: FontWeight.w600),
+                ),
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+              ),
+              const SizedBox(height: 16),
+              Text("Rate this scheme:", style: TextStyle(color: Colors.white)),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  ...List.generate(5, (index) {
+                    final starIndex = index + 1;
+                    return GestureDetector(
+                      onTap: (scheme!.userRating == null || _isEditingRating)
+                          ? () => setState(() => _userRating = starIndex.toDouble())
+                          : null,
+                      child: Icon(
+                        _userRating != null && _userRating! >= starIndex
+                            ? Icons.star_rounded
+                            : Icons.star_border_rounded,
+                        color: Colors.amberAccent,
+                        size: 28,
+                      ),
+                    );
+                  }),
+                  if (scheme!.userRating != null && !_isEditingRating)
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.white),
+                      tooltip: "Edit Rating",
+                      onPressed: () {
+                        setState(() {
+                          _isEditingRating = true;
+                        });
+                      },
                     ),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                  ),
-                  child: Stack(
-                    children: [
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: SchemeCardStyle.buildBackgroundIcon(category: category),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            scheme!.schemeName ?? '',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
-                          const SizedBox(height: 8),
-                          if (scheme!.averagerating != null || scheme!.totalrating != null)
-                            Row(
-                              children: [
-                                if (scheme!.averagerating != null) ...[
-                                  ShaderMask(
-                                    shaderCallback: (Rect bounds) {
-                                      return const LinearGradient(
-                                        colors: [Colors.amber, Colors.orangeAccent],
-                                      ).createShader(bounds);
-                                    },
-                                    blendMode: BlendMode.srcIn,
-                                    child: const Icon(Icons.star_rounded, size: 20),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    scheme!.averagerating!.toStringAsFixed(1),
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
-                                  ),
-                                ],
-                                if (scheme!.totalrating != null) ...[
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "(${scheme!.totalrating!.toInt()} ratings)",
-                                    style: const TextStyle(fontSize: 13, color: Colors.white70),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          const SizedBox(height: 12),
-                          Chip(
-                            avatar: Icon(icon, color: gradient.first, size: 18),
-                            label: Text(
-                              category,
-                              style: TextStyle(color: gradient.first, fontWeight: FontWeight.w600),
-                            ),
-                            backgroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-                          ),
-                          const SizedBox(height: 16),
-                          Text("Rate this scheme:", style: TextStyle(color: Colors.white)),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: List.generate(5, (index) {
-                              final starIndex = index + 1;
-                              return GestureDetector(
-                                onTap: scheme!.userRating == null
-                                    ? () => setState(() => _userRating = starIndex.toDouble())
-                                    : null,
-                                child: Icon(
-                                  _userRating != null && _userRating! >= starIndex
-                                      ? Icons.star_rounded
-                                      : Icons.star_border_rounded,
-                                  color: Colors.amberAccent,
-                                  size: 28,
-                                ),
-                              );
-                            }),
-                          ),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: (_userRating != null &&
-                                scheme!.userRating == null &&
-                                !isSubmittingRating)
-                                ? () async {
-                              final error = await schemeManager.rateScheme(
-                                schemeId: widget.schemeId,
-                                userId: userId,
-                                rating: _userRating!,
-                              );
-                              if (error != null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Error: $error")),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Rating submitted successfully!")),
-                                );
-                                await _fetchSchemeDetails();
-                              }
-                            }
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: scheme!.userRating != null ? Colors.grey.shade300 : Colors.white,
-                              foregroundColor: gradient.first,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                            ),
-                            child: isSubmittingRating
-                                ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                                : Text(scheme!.userRating != null ? "Rating Submitted" : "Submit Rating"),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _buildRatingButton(gradient),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRating() {
+    return (scheme!.averagerating != null || scheme!.totalrating != null)
+        ? Row(
+      children: [
+        if (scheme!.averagerating != null) ...[
+          ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return const LinearGradient(
+                colors: [Colors.amber, Colors.orangeAccent],
+              ).createShader(bounds);
+            },
+            blendMode: BlendMode.srcIn,
+            child: const Icon(Icons.star_rounded, size: 20),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            scheme!.averagerating!.toStringAsFixed(1),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
+          ),
+        ],
+        if (scheme!.totalrating != null) ...[
+          const SizedBox(width: 8),
+          Text(
+            "(${scheme!.totalrating!.toInt()} ratings)",
+            style: const TextStyle(fontSize: 13, color: Colors.white70),
+          ),
+        ],
+      ],
+    )
+        : const SizedBox.shrink();
+  }
+
+  Widget _buildRatingButton(List<Color> gradient) {
+    final schemeManager = context.watch<SchemeManager>();
+    final isSubmittingRating = schemeManager.schemeRatingStatus == Status.loading;
+
+    final userManager = context.watch<UserManager>();
+    final userId = userManager.user?.id ?? 0;
+
+    final bool isAlreadyRated = scheme!.userRating != null && !_isEditingRating;
+
+    return ElevatedButton(
+      onPressed: (_userRating != null && !isAlreadyRated && !isSubmittingRating)
+          ? () async {
+        final error = await schemeManager.rateScheme(
+          schemeId: widget.schemeId,
+          userId: userId,
+          rating: _userRating!,
+        );
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  error != null ? Icons.error_outline : Icons.check_circle_outline,
+                  color: Colors.white,
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: const BoxDecoration(color: Colors.white),
-                  child: TabBar(
-                    controller: _tabController,
-                    labelColor: gradient.first,
-                    unselectedLabelColor: Colors.black45,
-                    indicatorColor: gradient.first,
-                    tabs: const [
-                      Tab(icon: Icon(Icons.description_outlined), text: "Details"),
-                      Tab(icon: Icon(Icons.check_circle_outline), text: "Criteria"),
-                      Tab(icon: Icon(Icons.how_to_reg), text: "Apply"),
-                      Tab(icon: Icon(Icons.event), text: "Dates"),
-                    ],
-                  ),
-                ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _detailsTab(),
-                        _eligibilityTab(),
-                        _applyTab(),
-                        _datesTab(
-                          scheme!.launchDate != null
-                              ? formatter.format(DateTime.parse(scheme!.launchDate!))
-                              : 'N/A',
-                          scheme!.expiryDate != null
-                              ? formatter.format(DateTime.parse(scheme!.expiryDate!))
-                              : 'N/A',
-                        ),
-                      ],
-                    ),
+                  child: Text(
+                    error != null ? "Error: $error" : "Rating submitted successfully!",
+                    style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
             ),
+            backgroundColor: error != null ? Colors.redAccent : Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            duration: const Duration(seconds: 3),
+            elevation: 6,
           ),
+        );
+
+        if (error == null) {
+          setState(() => _isEditingRating = false);
+          await _fetchSchemeDetails();
+        }
+      }
+          : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isAlreadyRated ? Colors.grey.shade300 : Colors.white,
+        foregroundColor: gradient.first,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        elevation: 3,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      ),
+      child: isSubmittingRating
+          ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+          : Text(
+        isAlreadyRated ? "Rating Submitted" : "Submit Rating",
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _buildTabs(List<Color> gradient) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(color: Colors.white),
+      child: TabBar(
+        controller: _tabController,
+        labelColor: gradient.first,
+        unselectedLabelColor: Colors.black45,
+        indicatorColor: gradient.first,
+        tabs: const [
+          Tab(icon: Icon(Icons.description_outlined), text: "Details"),
+          Tab(icon: Icon(Icons.check_circle_outline), text: "Criteria"),
+          Tab(icon: Icon(Icons.sync_alt), text: "Process"),
+          Tab(icon: Icon(Icons.event), text: "Dates"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabContent(DateFormat formatter) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _detailsTab(),
+            _eligibilityTab(),
+            _applyTab(),
+            _datesTab(
+              scheme!.launchDate != null ? formatter.format(DateTime.parse(scheme!.launchDate!)) : 'N/A',
+              scheme!.expiryDate != null ? formatter.format(DateTime.parse(scheme!.expiryDate!)) : 'N/A',
+            ),
+          ],
         ),
       ),
     );
@@ -281,12 +397,7 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          Text(
-            scheme!.description ?? 'N/A',
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
-            textAlign: TextAlign.justify,
-          ),
+          Text(scheme!.description ?? 'N/A', style: const TextStyle(fontSize: 14, color: Colors.black87), textAlign: TextAlign.justify),
           const SizedBox(height: 24),
           _buildInfoRow("Occupation", scheme!.occupation),
           _buildInfoRow("Benefit Type", scheme!.benefitType),
@@ -297,7 +408,6 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
       ),
     );
   }
-
 
   Widget _eligibilityTab() {
     return SingleChildScrollView(
@@ -322,8 +432,8 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
 
   Widget _applyTab() {
     final link = scheme!.applicationLink;
-    final isWebLink = link != null && (link.startsWith('http://') || link.startsWith('https://'));
     final uri = Uri.tryParse(link ?? '');
+    final isWebLink = link != null && (link.startsWith('http://') || link.startsWith('https://'));
 
     Future<void> tryLaunchUrl() async {
       try {
@@ -338,13 +448,17 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
       }
     }
 
+
     return SingleChildScrollView(
       child: link == null || link.isEmpty
           ? const Text("Application link not available.")
           : Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Application Link:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            "Application Link:",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           isWebLink
               ? Column(
@@ -354,18 +468,23 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
                 onTap: tryLaunchUrl,
                 child: Text(
                   link,
-                  style: const TextStyle(color: Colors.blueAccent, decoration: TextDecoration.underline),
+                  style: const TextStyle(
+                    color: Colors.blueAccent,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: tryLaunchUrl,
-                icon: const Icon(Icons.open_in_new, size: 18),
-                label: const Text("Apply"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                ),
+              const SizedBox(height: 8),
+              IconButton(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: link));
+                  // Optional: show a confirmation
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Link copied to clipboard")),
+                  );
+                },
+                icon: const Icon(Icons.copy, color: Colors.grey),
+                tooltip: "Copy link",
               ),
             ],
           )
@@ -382,8 +501,6 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
         children: [
           _buildInfoRow("Launch Date", launch),
           _buildInfoRow("Expiry Date", expiry),
-          const SizedBox(height: 10),
-
         ],
       ),
     );

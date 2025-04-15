@@ -34,7 +34,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
       final authManager = context.read<AuthManager>();
       final userManager = context.read<UserManager>();
-      final schemeManager = context.read<SchemeManager>();
 
       final userSession = await authManager.checkUser();
 
@@ -47,7 +46,6 @@ class _SplashScreenState extends State<SplashScreen> {
         } else {
           LogUtility.info('USER : THIS APP HAS A USER');
           await userManager.getUser(userSession.token);
-          await schemeManager.getScheme();
           if (!mounted) return;
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const BottomNav()),

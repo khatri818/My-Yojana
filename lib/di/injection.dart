@@ -34,6 +34,7 @@ import '../features/home/data/data_source/scheme_data_source.dart';
 import '../features/home/data/data_source/scheme_data_source_implementation.dart';
 import '../features/home/data/repositories/scheme_repository_implementation.dart';
 import '../features/home/domain/repositories/scheme_repository.dart';
+import '../features/home/domain/use_cases/get_bookmark_usecase.dart';
 import '../features/home/domain/use_cases/rate_scheme_usecase.dart';
 import '../features/user/data/datasources/user_data_source.dart';
 import '../features/user/data/datasources/user_data_source_implementation.dart';
@@ -161,10 +162,14 @@ class Injection {
             () => DeleteBookmarkUseCase(getIt<SchemeRepository>())
     );
 
+    getIt.registerLazySingleton<GetBookmarkUseCase>(
+            () => GetBookmarkUseCase(getIt<SchemeRepository>())
+    );
 
     getIt.registerLazySingleton<GetTopRatedSchemeUseCase>(
             () => GetTopRatedSchemeUseCase(getIt<SchemeRepository>())
     );
+
 
 
 
@@ -189,11 +194,14 @@ class Injection {
 
   static SchemeManager get schemeManager =>
       SchemeManager(getSchemeUseCase: getIt<GetSchemeUseCase>(),
+      getBookmarkUseCase: getIt<GetBookmarkUseCase>(),
       deleteBookmarkUseCase: getIt<DeleteBookmarkUseCase>(),
       getTopRatedSchemeUseCase: getIt<GetTopRatedSchemeUseCase>(),
       getSchemeIdUseCase: getIt<GetSchemeIdUseCase>(),
         rateSchemeUseCase: getIt<RateSchemeUseCase>(),
         createBookmarkUseCase: getIt<CreateBookmarkUseCase>(),);
+
+
 
   static init() async {
     await _initSystemSettings();

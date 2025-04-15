@@ -1,12 +1,12 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:my_yojana/common/app_colors.dart';
 import 'package:my_yojana/features/home/presentation/pages/search_screen.dart';
 import 'package:my_yojana/features/home/presentation/manager/scheme_manger.dart';
 import 'package:my_yojana/features/home/presentation/widgets/scheme_item.dart';
 import 'package:my_yojana/features/home/presentation/widgets/scheme_card_style.dart';
 import '../../../../core/enum/status.dart';
+import '../widgets/filtered_scheme_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -256,7 +256,9 @@ class _HomePageState extends State<HomePage> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => SearchPage(isMatchScheme: false)),
+          MaterialPageRoute(
+            builder: (_) => FilteredSchemePage(category: category), // ✅ navigate to category-filtered page
+          ),
         );
       },
       child: Container(

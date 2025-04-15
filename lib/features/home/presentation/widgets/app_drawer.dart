@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:my_yojana/core/enum/status.dart';
+import 'package:my_yojana/features/user/presentation/pages/AboutUsPage.dart';
+import 'package:my_yojana/features/user/presentation/pages/ContactUsPage.dart';
+import 'package:my_yojana/features/user/presentation/pages/HelpPage.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/utils/app_utils.dart';
 import '../../../auth/presentation/manager/auth_manger.dart';
@@ -119,7 +122,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     _buildDrawerItem(
                       icon: Icons.info_outline,
                       label: 'About MyYojana',
-                      onTap: () {},
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AboutUsPage())),
                     ),
                     _buildDrawerItem(
                       icon: Icons.lightbulb_outline,
@@ -129,12 +132,12 @@ class _AppDrawerState extends State<AppDrawer> {
                     _buildDrawerItem(
                       icon: Icons.contact_mail_outlined,
                       label: 'Contact Us',
-                      onTap: () {},
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ContactUsPage())),
                     ),
                     _buildDrawerItem(
                       icon: Icons.help_outline,
                       label: 'Help',
-                      onTap: () {},
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpPage())),
                     ),
                     const Divider(thickness: 1, indent: 16, endIndent: 16),
                     _buildDrawerItem(

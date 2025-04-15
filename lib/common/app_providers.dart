@@ -29,5 +29,6 @@ class AppProvider {
     ChangeNotifierProvider<SchemeManager>(
       create: (_) => Injection.schemeManager,
     ),
+
   ];
 }

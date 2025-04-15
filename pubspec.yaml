@@ -49,6 +49,7 @@ dependencies:
   dio_http_formatter: ^3.2.1
   flutter_launcher_icons: ^0.13.1
   get_it:
+  google_fonts: ^5.0.1
   carousel_slider: ^5.0.0
   shared_preferences: ^2.2.0
   cupertino_icons: ^1.0.2
