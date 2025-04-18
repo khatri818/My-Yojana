@@ -27,10 +27,10 @@ class _SearchPageState extends State<SearchPage> {
   String? _selectedGender;
   String? _selectedCategory;
   String? _selectedEduCategory;
-  bool _selectedMinorityOption = false;
-  bool _selectedDisableOption = false;
+  bool? _selectedMinorityOption;
+  bool? _selectedDisableOption;
   String? _selectedMaritalStatus;
-  bool _selectedBplOption = false;
+  bool? _selectedBplOption;
   String? _selectedResidenceType;
 
   bool _isMatchProfileEnabled = false;
@@ -50,9 +50,12 @@ class _SearchPageState extends State<SearchPage> {
     'Graduation',
     'Above Graduation'
   ];
+
+  List<String> _selectedCategories = [];
+
   final List<String> _genders = ['male', 'female', 'other'];
   final List<String> _maritalStatus = ['single', 'married', 'widowed'];
-  final List<String> _residenceTypes = ['Rural', 'Urban', 'Semi-urban'];
+  final List<String> _residenceTypes = ['Rural', 'Urban', 'Semi-Urban'];
 
   @override
   void initState() {
@@ -105,9 +108,9 @@ class _SearchPageState extends State<SearchPage> {
       _selectedGender ?? '',
       _cityController.text.trim(),
       income ?? 0.0,
-      _selectedDisableOption,
-      _selectedMinorityOption,
-      _selectedBplOption,
+      _selectedDisableOption == true,
+      _selectedMinorityOption == true,
+      _selectedBplOption == true,
     );
   }
 
@@ -118,12 +121,13 @@ class _SearchPageState extends State<SearchPage> {
     setState(() {
       _selectedGender = null;
       _selectedCategory = null;
+      _selectedCategories = [];
       _selectedEduCategory = null;
       _selectedMaritalStatus = null;
       _selectedResidenceType = null;
-      _selectedMinorityOption = false;
-      _selectedDisableOption = false;
-      _selectedBplOption = false;
+      _selectedMinorityOption = null;
+      _selectedDisableOption = null;
+      _selectedBplOption = null;
       _occupationController.clear();
       _cityController.clear();
       _incomeController.clear();
@@ -131,6 +135,7 @@ class _SearchPageState extends State<SearchPage> {
       _isMatchProfileEnabled = false;
     });
   }
+
 
   void _prefillUserData(UserManager manager,
       [void Function(void Function())? setModalState]) {
@@ -141,7 +146,6 @@ class _SearchPageState extends State<SearchPage> {
 
     setter(() {
       _selectedGender = user.gender;
-      _selectedCategory = user.category;
       _selectedEduCategory = user.educationLevel;
       _selectedMaritalStatus = user.maritalStatus;
       _selectedResidenceType = user.residenceType;
@@ -258,6 +262,39 @@ class _SearchPageState extends State<SearchPage> {
                               }
                             },
                           ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton.icon(
+                              icon: const Icon(
+                                Icons.check_circle_rounded,
+                                size: 20,
+                                color: Color(0xFF2E7D32), // Deep green for clarity
+                              ),
+                              label: const Text(
+                                "Apply Filters",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2E7D32),
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                backgroundColor: const Color(0xFFE8F5E9), // Light green background
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                foregroundColor: Colors.green,
+                                elevation: 1,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _onFilter();
+                              },
+                            ),
+                          ),
                           const Divider(height: 28),
                           _buildDropdown(
                               "Gender", _selectedGender, _genders, (val) {
@@ -265,11 +302,43 @@ class _SearchPageState extends State<SearchPage> {
                             setModalState(() => _selectedGender = val);
                           }),
                           const SizedBox(height: 16),
-                          _buildDropdown("Scheme Category", _selectedCategory,
-                              _schemeCategories, (val) {
-                                turnOffMatchProfile();
-                                setModalState(() => _selectedCategory = val);
-                              }),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Scheme Categories",
+                                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 4.0,
+                                  children: _schemeCategories.map((category) {
+                                    final isSelected = _selectedCategories.contains(category);
+                                    return FilterChip(
+                                      label: Text(category),
+                                      selected: isSelected,
+                                      onSelected: (selected) {
+                                        turnOffMatchProfile();
+                                        setModalState(() {
+                                          if (selected) {
+                                            _selectedCategories.add(category);
+                                          } else {
+                                            _selectedCategories.remove(category);
+                                          }
+                                          _selectedCategory = _selectedCategories.join(',');
+                                        });
+                                      },
+                                      selectedColor: Colors.blue.shade100,
+                                      checkmarkColor: Colors.blue,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
                           const SizedBox(height: 16),
                           _buildDropdown(
                               "Education Level", _selectedEduCategory,
@@ -295,17 +364,16 @@ class _SearchPageState extends State<SearchPage> {
                           SwitchListTile.adaptive(
                             title: const Text("Are you from a minority group?"),
                             activeColor: Colors.blueAccent,
-                            value: _selectedMinorityOption,
+                            value: _selectedMinorityOption ?? false,
                             onChanged: (val) {
                               turnOffMatchProfile();
-                              setModalState(() =>
-                              _selectedMinorityOption = val);
+                              setModalState(() => _selectedMinorityOption = val);
                             },
                           ),
                           SwitchListTile.adaptive(
                             title: const Text("Are you differently abled?"),
                             activeColor: Colors.blueAccent,
-                            value: _selectedDisableOption,
+                            value: _selectedDisableOption ?? false,
                             onChanged: (val) {
                               turnOffMatchProfile();
                               setModalState(() => _selectedDisableOption = val);
@@ -314,7 +382,7 @@ class _SearchPageState extends State<SearchPage> {
                           SwitchListTile.adaptive(
                             title: const Text("Do you have a BPL card?"),
                             activeColor: Colors.blueAccent,
-                            value: _selectedBplOption,
+                            value: _selectedBplOption ?? false,
                             onChanged: (val) {
                               turnOffMatchProfile();
                               setModalState(() => _selectedBplOption = val);
@@ -495,11 +563,11 @@ class _SearchPageState extends State<SearchPage> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 6,
-            offset: const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       ),

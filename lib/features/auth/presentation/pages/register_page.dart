@@ -117,7 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       maritalStatus: _selectedMaritalStatus ?? '',
       city: _cityController.text,
       residenceType: _selectedResidenceType ?? '',
-      category: _selectedCategory ?? '',
+      category: _selectedCasteCategory ?? '',
       differentlyAbled: _selectedDisableOption ?? false,
       disabilityPercentage: int.tryParse(_disabilityController.text) ?? 0,
       minority: _selectedMinorityOption ?? false,
@@ -293,6 +293,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 16),
 
+          /// Date of Birth picker
+          GestureDetector(
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
+                firstDate: DateTime(1900),
+                lastDate: DateTime.now(),
+              );
+              if (date != null) {
+                _dobController.text = DateFormat('dd/MM/yyyy').format(date);
+                final today = DateTime.now();
+                final calculatedAge = today.year - date.year -
+                    ((today.month < date.month ||
+                        (today.month == date.month && today.day < date.day))
+                        ? 1
+                        : 0);
+                _ageController.text = calculatedAge.toString();
+              }
+            },
+            child: AbsorbPointer(
+              child: TextFormField(
+                controller: _dobController,
+                decoration: const InputDecoration(labelText: 'Date of Birth'),
+                validator: (val) =>
+                val == null || val.trim().isEmpty ? 'Required' : null,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
           /// Age field
           TextFormField(
             controller: _ageController,
@@ -338,37 +369,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             },
           ),
 
-          const SizedBox(height: 16),
 
-          /// Date of Birth picker
-          GestureDetector(
-            onTap: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
-                firstDate: DateTime(1900),
-                lastDate: DateTime.now(),
-              );
-              if (date != null) {
-                _dobController.text = DateFormat('dd/MM/yyyy').format(date);
-                final today = DateTime.now();
-                final calculatedAge = today.year - date.year -
-                    ((today.month < date.month ||
-                        (today.month == date.month && today.day < date.day))
-                        ? 1
-                        : 0);
-                _ageController.text = calculatedAge.toString();
-              }
-            },
-            child: AbsorbPointer(
-              child: TextFormField(
-                controller: _dobController,
-                decoration: const InputDecoration(labelText: 'Date of Birth'),
-                validator: (val) =>
-                val == null || val.trim().isEmpty ? 'Required' : null,
-              ),
-            ),
-          ),
 
           const SizedBox(height: 24),
           _gradientButton('Next', () {
@@ -393,19 +394,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Select Scheme Category'),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            value: _selectedCategory,
-            decoration: const InputDecoration(labelText: 'Category'),
-            items: _schemeCategories
-                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                .toList(),
-            onChanged: (val) => setState(() => _selectedCategory = val),
-            validator: (val) =>
-            val == null || val.trim().isEmpty ? 'Please select a category' : null,
-          ),
-          const SizedBox(height: 16),
           TextFormField(
             controller: _occupationController,
             decoration: const InputDecoration(labelText: 'Occupation'),

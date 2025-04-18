@@ -11,9 +11,9 @@ abstract class SchemeRepository {
     required String gender,
     required String city,
     required double income_max,
-    required bool differently_abled,
-    required bool minority,
-    required bool bpl_category});
+    required bool? differently_abled,
+    required bool? minority,
+    required bool? bpl_category});
 
   AppTypeResponse<List<Scheme>> getTopRatedScheme();
   AppTypeResponse<Scheme> getSchemeId({required int schemeId, required String firebaseId});

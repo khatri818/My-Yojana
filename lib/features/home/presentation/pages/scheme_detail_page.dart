@@ -478,44 +478,49 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
             const SizedBox(height: 24),
           ],
 
-          // Application Link
-          const Text(
-            "Application Link:",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          if (link == null || link.isEmpty)
-            const Text("Application link not available.")
-          else if (isWebLink)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: tryLaunchUrl,
-                    child: Text(
-                      link,
-                      style: const TextStyle(
-                        color: Colors.blueAccent,
-                        decoration: TextDecoration.underline,
+          // Application Link / Instructions
+          if (link != null && link.isNotEmpty) ...[
+            Text(
+              link.startsWith('http://') || link.startsWith('https://')
+                  ? "Application Link:"
+                  : "How to Apply:",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            if (link.startsWith('http://') || link.startsWith('https://'))
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: tryLaunchUrl,
+                      child: Text(
+                        link,
+                        style: const TextStyle(
+                          color: Colors.blueAccent,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: link));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Link copied to clipboard")),
-                    );
-                  },
-                  icon: const Icon(Icons.copy, color: Colors.grey),
-                  tooltip: "Copy link",
-                ),
-              ],
-            )
-          else
-            Text(link, style: const TextStyle(fontSize: 15)),
+                  IconButton(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: link));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Link copied to clipboard")),
+                      );
+                    },
+                    icon: const Icon(Icons.copy, color: Colors.grey),
+                    tooltip: "Copy link",
+                  ),
+                ],
+              )
+            else
+              Text(
+                link,
+                style: const TextStyle(fontSize: 15),
+              ),
+          ]
         ],
       ),
     );
@@ -547,6 +552,7 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+
                   Expanded(
                     child: Text(
                       doc.trim(),

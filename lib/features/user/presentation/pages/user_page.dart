@@ -83,6 +83,12 @@ class _UserPageState extends State<UserPage> {
         orElse: () => '',
       ),
     );
+    categoryController = TextEditingController(
+      text: _casteCategories.firstWhere(
+            (e) => e.toLowerCase() == (user?.category ?? '').toLowerCase(),
+        orElse: () => '',
+      ),
+    );
     maritalStatusController = TextEditingController(text: user?.maritalStatus ?? '');
     educationLevelController = TextEditingController(
       text: _eduCategories.firstWhere(
@@ -108,6 +114,8 @@ class _UserPageState extends State<UserPage> {
 
     setState(() => loading = false);
   }
+
+
 
   void _toggleEdit() => setState(() => isEditing = !isEditing);
 
@@ -494,6 +502,7 @@ Widget _buildEditableField(String label, TextEditingController controller, IconD
                               _buildToggleSwitch("Minority", minority, (v) => setState(() => minority = v)),
                               _buildToggleSwitch("Differently Abled", differentlyAbled, (v) => setState(() => differentlyAbled = v)),
                               _buildToggleSwitch("BPL Category", bplCategory, (v) => setState(() => bplCategory = v)),
+                              _buildDropdownField("Caste Category", categoryController, _casteCategories, Icons.group),
                               _buildEditableField("Annual Income", incomeController, Icons.currency_rupee),
                             ]),
                           ],

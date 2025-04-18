@@ -10,9 +10,9 @@ abstract class SchemeDataSource {
     required String gender,
     required String city,
     required double income_max,
-    required bool differently_abled,
-    required bool minority,
-    required bool bpl_category});
+    required bool? differently_abled,
+    required bool? minority,
+    required bool? bpl_category});
 
   AppTypeResponse<List<Scheme>> getTopRatedScheme();
 

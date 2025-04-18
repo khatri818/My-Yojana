@@ -61,9 +61,9 @@ class SchemeManager with ChangeNotifier {
   String _gender = '';
   String _city = '';
   double _income_max = 0.0;
-  bool _differently_abled = false;
-  bool _minority = false;
-  bool _bpl_category = false;
+  bool? _differently_abled;
+  bool? _minority;
+  bool? _bpl_category;
 
   Status _schemeLoadingStatus = Status.loading;
   Status get schemeLoadingStatus => _schemeLoadingStatus;
@@ -105,18 +105,22 @@ class SchemeManager with ChangeNotifier {
     _gender = '';
     _city = '';
     _income_max = 0.0;
-    _differently_abled = false;
-    _minority = false;
-    _bpl_category = false;
-    searchReleaseQuery = '';
 
+    _differently_abled = null;
+    _minority = null;
+    _bpl_category = null;
+
+    searchReleaseQuery = '';
     _page = 1;
     _hasMoreData = true;
     scheme?.clear();
+
     _schemeLoadingStatus = Status.loading;
     _schemePaginationLoadingStatus = Status.loading;
+
     notifyListeners();
   }
+
 
   void applyFilterFromUserProfile({
     required String? gender,
@@ -129,9 +133,9 @@ class SchemeManager with ChangeNotifier {
     _gender = gender ?? '';
     _city = city ?? '';
     _income_max = incomeMax ?? 0.0;
-    _differently_abled = differentlyAbled ?? false;
-    _minority = minority ?? false;
-    _bpl_category = bplCategory ?? false;
+    _differently_abled = differentlyAbled;
+    _minority = minority;
+    _bpl_category = bplCategory;
 
     _page = 1;
     _hasMoreData = true;
@@ -141,6 +145,7 @@ class SchemeManager with ChangeNotifier {
 
     getScheme(showLoading: true);
   }
+
 
   Future<void> getScheme({bool showLoading = false}) async {
     _setLoadingStatus(showLoading);
@@ -200,9 +205,9 @@ class SchemeManager with ChangeNotifier {
       String gender,
       String city,
       double income_max,
-      bool differently_abled,
-      bool minority,
-      bool bpl_category,
+      bool? differently_abled,
+      bool? minority,
+      bool? bpl_category,
       ) {
     _page = 1;
     _hasMoreData = true;
@@ -220,6 +225,7 @@ class SchemeManager with ChangeNotifier {
 
     getScheme(showLoading: true);
   }
+
 
   Future<Scheme?> getSchemeId(int schemeId, String firebaseId) async {
     _schemeByIdStatus = Status.loading;

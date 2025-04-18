@@ -18,9 +18,9 @@ class SchemeRepositoryImplementation extends SchemeRepository {
       required String gender,
       required String city,
       required double income_max,
-      required bool differently_abled,
-      required bool minority,
-      required bool bpl_category}) => _schemeDataSource.getScheme(
+      required bool? differently_abled,
+      required bool? minority,
+      required bool? bpl_category}) => _schemeDataSource.getScheme(
       query: query,
       page: page,
       category: category,

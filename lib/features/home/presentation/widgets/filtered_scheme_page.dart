@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:my_yojana/features/home/presentation/widgets/scheme_card_style.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/enum/status.dart';
 import '../../../user/presentation/manager/user_manager.dart';
@@ -29,11 +30,11 @@ class _FilteredSchemePageState extends State<FilteredSchemePage> {
     super.didChangeDependencies();
     if (!_hasInitialized) {
       final schemeManager = context.read<SchemeManager>();
-      schemeManager.clearFilters(); // Clear any existing filters
+      schemeManager.clearFilters();
       schemeManager.setFilter(
-        widget.category, // Apply category filter
+        widget.category,
         '', '', 0.0,
-        false, false, false,
+        null, null, null,
       );
       _hasInitialized = true;
     }
@@ -60,18 +61,46 @@ class _FilteredSchemePageState extends State<FilteredSchemePage> {
     schemeManager.resetState();
     schemeManager.setFilter(
       widget.category, '', '', 0.0,
-      false, false, false,
+      null, null, null,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.category} Schemes'),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: AppBar(
+          automaticallyImplyLeading: true,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: SchemeCardStyle.getGradient(widget.category),
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${widget.category} Schemes',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          foregroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
       ),
+
       backgroundColor: Colors.grey[100],
       body: Consumer<SchemeManager>(
         builder: (context, schemeManager, _) {
@@ -93,10 +122,9 @@ class _FilteredSchemePageState extends State<FilteredSchemePage> {
             onRefresh: _onRefresh,
             child: ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.only(top: 16), // 👈 Added spacing here
+              padding: const EdgeInsets.only(top: 16),
               itemCount: schemes.length + 1,
               itemBuilder: (context, index) {
-                // Show loading indicator at the end if more data is being fetched
                 if (index == schemes.length) {
                   return schemeManager.hasMoreData
                       ? const Padding(
@@ -105,7 +133,6 @@ class _FilteredSchemePageState extends State<FilteredSchemePage> {
                   )
                       : const SizedBox.shrink();
                 }
-                // Display each scheme item in the list
                 return SchemeItem(scheme: schemes[index]);
               },
             ),

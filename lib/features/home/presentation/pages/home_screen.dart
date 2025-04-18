@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -39,7 +39,6 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// 🌟 Top-Rated Schemes Carousel
                 Consumer<SchemeManager>(
                   builder: (context, manager, _) {
                     final status = manager.topRatedSchemeStatus;
@@ -70,7 +69,7 @@ class _HomePageState extends State<HomePage> {
                             enlargeCenterPage: true,
                             autoPlay: true,
                             autoPlayInterval: const Duration(seconds: 5),
-                            viewportFraction: 0.88,
+                            viewportFraction: 1,
                           ),
                           items: topSchemes
                               .map((scheme) => Padding(

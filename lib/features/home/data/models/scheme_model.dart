@@ -108,7 +108,7 @@ class SchemeModel extends Scheme {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final map = <String, dynamic>{
       'id': id,
       'scheme_name': schemeName,
       'category': category,
@@ -123,11 +123,8 @@ class SchemeModel extends Scheme {
       'gender': gender,
       'caste': caste,
       'benefit_type': benefitType,
-      'differently_abled': differentlyAbled,
       'marital_status': maritalStatus,
       'disability_percentage': disabilityPercentage,
-      'minority': minority,
-      'bpl_category': bplCategory,
       'department': department,
       'application_link': applicationLink,
       'scheme_details': schemeDetails,
@@ -141,5 +138,11 @@ class SchemeModel extends Scheme {
       'process': process,
       'documents': documents,
     };
+
+    if (differentlyAbled != null) map['differently_abled'] = differentlyAbled;
+    if (minority != null) map['minority'] = minority;
+    if (bplCategory != null) map['bpl_category'] = bplCategory;
+
+    return map;
   }
 }

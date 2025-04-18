@@ -59,7 +59,44 @@ class _AppDrawerState extends State<AppDrawer> {
 
           final user = manager.user;
           if (manager.userLoadingStatus.failure || user == null) {
-            return const Center(child: Text("Something went wrong!"));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 42, color: Colors.redAccent),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Failed to load profile info",
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    label: const Text("Retry"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2575FC),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () async {
+                      final authManager = context.read<AuthManager>();
+                      final userManager = context.read<UserManager>();
+                      final userSession = await authManager.checkUser();
+                      if (!mounted) return;
+
+                      if (userSession == null || userSession.isNewUser) {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (_) => const LoginPage()),
+                        );
+                        return;
+                      }
+
+                      await userManager.getUser(userSession.token);
+                    },
+                  ),
+                ],
+              ),
+            );
           }
 
           final displayName = user.name ?? "Unknown";
