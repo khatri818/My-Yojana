@@ -29,6 +29,8 @@ class Scheme extends Equatable {
   final int? totalrating;
   final int? isBookmarked;
   final double? userRating;
+  final String? process;
+  final String? documents;
 
   const Scheme({
     this.id,
@@ -60,6 +62,8 @@ class Scheme extends Equatable {
     this.totalrating,
     this.isBookmarked,
     this.userRating,
+    this.process,
+    this.documents
   });
   @override
   List<Object?> get props => [
@@ -91,6 +95,8 @@ class Scheme extends Equatable {
     averagerating,
     totalrating,
     isBookmarked,
-    userRating
+    userRating,
+    process,
+    documents
   ];
 }

@@ -30,7 +30,9 @@ class SchemeModel extends Scheme {
     this.averagerating,
     this.totalrating,
     this.isBookmarked,
-    this.userRating
+    this.userRating,
+    this.process,
+    this.documents
   });
 
   final int? id;
@@ -62,6 +64,8 @@ class SchemeModel extends Scheme {
   final int? totalrating;
   final int? isBookmarked;
   final double? userRating;
+  final String? process;
+  final String? documents;
 
   factory SchemeModel.fromJson(Map<String, dynamic> map) {
     return SchemeModel(
@@ -98,6 +102,8 @@ class SchemeModel extends Scheme {
       totalrating: map['total_ratings'],
       isBookmarked: map['bookmark_id'],
       userRating: map['user_rating'],
+      process: map['process'],
+      documents: map['documents'],
     );
   }
 
@@ -132,6 +138,8 @@ class SchemeModel extends Scheme {
       'total_ratings': totalrating,
       'bookmark_id': isBookmarked,
       'user_rating': userRating,
+      'process': process,
+      'documents': documents,
     };
   }
 }

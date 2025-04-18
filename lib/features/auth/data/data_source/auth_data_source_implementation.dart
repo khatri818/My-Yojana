@@ -44,7 +44,7 @@ class AuthDataSoruceImplementation extends AuthDataSource {
 
           // Check if error indicates a new user
           if (left.message.contains("User with firebase_id") && left.message.contains("not found")) {
-            LogUtility.info('New user detected. Proceeding with default setup.');
+            LogUtility.info('New user . Proceeding with default setup.');
 
             await _localStorage.writeBool(
               SecureStorageItem<bool>(key: StorageKey.isNewUser, value: true),
@@ -54,7 +54,7 @@ class AuthDataSoruceImplementation extends AuthDataSource {
             );
 
             return const Right(SuccessMessage(
-              message: 'New user detected. Proceeding with onboarding.',
+              message: 'New user. Proceeding with onboarding.',
             ));
           }
 

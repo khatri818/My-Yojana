@@ -155,23 +155,29 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
           )
         ],
       ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 700),
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
-            ),
-            child: Column(
-              children: [
-                _buildHeader(context, gradient, icon),
-                _buildTabs(gradient),
-                _buildTabContent(formatter),
-              ],
+      body: SingleChildScrollView(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 700),
+            child: Container(
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8)],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context, gradient, icon),
+                  _buildTabs(gradient),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: _buildTabContent(formatter),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -363,31 +369,26 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
         unselectedLabelColor: Colors.black45,
         indicatorColor: gradient.first,
         tabs: const [
-          Tab(icon: Icon(Icons.description_outlined), text: "Details"),
-          Tab(icon: Icon(Icons.check_circle_outline), text: "Criteria"),
-          Tab(icon: Icon(Icons.sync_alt), text: "Process"),
-          Tab(icon: Icon(Icons.event), text: "Dates"),
+          Tab(icon: Icon(Icons.description), text: "Detail"),
+          Tab(icon: Icon(Icons.checklist), text: "Criteria"),
+          Tab(icon: Icon(Icons.assignment_turned_in), text: "Process"),
+          Tab(icon: Icon(Icons.folder_copy), text: "Docs"),
         ],
       ),
     );
   }
 
   Widget _buildTabContent(DateFormat formatter) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: TabBarView(
-          controller: _tabController,
-          children: [
-            _detailsTab(),
-            _eligibilityTab(),
-            _applyTab(),
-            _datesTab(
-              scheme!.launchDate != null ? formatter.format(DateTime.parse(scheme!.launchDate!)) : 'N/A',
-              scheme!.expiryDate != null ? formatter.format(DateTime.parse(scheme!.expiryDate!)) : 'N/A',
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: TabBarView(
+        controller: _tabController,
+        children: [
+          _detailsTab(),
+          _eligibilityTab(),
+          _applyTab(),
+          _docsTab(),
+        ],
       ),
     );
   }
@@ -431,6 +432,7 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
   }
 
   Widget _applyTab() {
+    final steps = scheme!.process?.split(';').where((s) => s.trim().isNotEmpty).toList();
     final link = scheme!.applicationLink;
     final uri = Uri.tryParse(link ?? '');
     final isWebLink = link != null && (link.startsWith('http://') || link.startsWith('https://'));
@@ -448,59 +450,134 @@ class _SchemeDetailPageState extends State<SchemeDetailPage> with SingleTickerPr
       }
     }
 
-
     return SingleChildScrollView(
-      child: link == null || link.isEmpty
-          ? const Text("Application link not available.")
-          : Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Application Steps
+          if (steps != null && steps.isNotEmpty) ...[
+            const Text(
+              "Application Process:",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            ...steps.map((step) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      step.trim(),
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 24),
+          ],
+
+          // Application Link
           const Text(
             "Application Link:",
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          isWebLink
-              ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: tryLaunchUrl,
-                child: Text(
-                  link,
-                  style: const TextStyle(
-                    color: Colors.blueAccent,
-                    decoration: TextDecoration.underline,
+          if (link == null || link.isEmpty)
+            const Text("Application link not available.")
+          else if (isWebLink)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: tryLaunchUrl,
+                    child: Text(
+                      link,
+                      style: const TextStyle(
+                        color: Colors.blueAccent,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              IconButton(
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: link));
-                  // Optional: show a confirmation
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Link copied to clipboard")),
-                  );
-                },
-                icon: const Icon(Icons.copy, color: Colors.grey),
-                tooltip: "Copy link",
-              ),
-            ],
-          )
-              : Text(link, style: const TextStyle(fontSize: 15)),
+                IconButton(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: link));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Link copied to clipboard")),
+                    );
+                  },
+                  icon: const Icon(Icons.copy, color: Colors.grey),
+                  tooltip: "Copy link",
+                ),
+              ],
+            )
+          else
+            Text(link, style: const TextStyle(fontSize: 15)),
         ],
       ),
     );
   }
 
-  Widget _datesTab(String launch, String expiry) {
+  Widget _docsTab() {
+    final docs = scheme!.documents?.split(';').where((d) => d.trim().isNotEmpty).toList();
+
+    final launchDate = scheme!.launchDate != null
+        ? DateFormat.yMMMMd().format(DateTime.parse(scheme!.launchDate!))
+        : 'N/A';
+
+    final expiryDate = scheme!.expiryDate != null
+        ? DateFormat.yMMMMd().format(DateTime.parse(scheme!.expiryDate!))
+        : 'N/A';
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInfoRow("Launch Date", launch),
-          _buildInfoRow("Expiry Date", expiry),
+          if (docs != null && docs.isNotEmpty) ...[
+            const Text(
+              "Required Documents:",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            ...docs.map((doc) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      doc.trim(),
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 24),
+          ],
+
+          // Dates Section
+          const Text(
+            "Scheme Duration:",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const SizedBox(width: 140, child: Text("Launch Date:", style: TextStyle(fontWeight: FontWeight.w600))),
+              Text(launchDate),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const SizedBox(width: 140, child: Text("Expiry Date:", style: TextStyle(fontWeight: FontWeight.w600))),
+              Text(expiryDate),
+            ],
+          ),
         ],
       ),
     );

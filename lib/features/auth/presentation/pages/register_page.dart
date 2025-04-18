@@ -292,27 +292,72 @@ class _RegisterScreenState extends State<RegisterScreen> {
             }).toList(),
           ),
           const SizedBox(height: 16),
+
+          /// Age field
           TextFormField(
             controller: _ageController,
             decoration: const InputDecoration(labelText: 'Age'),
             keyboardType: TextInputType.number,
             validator: (val) {
               if (val == null || val.trim().isEmpty) return 'Required';
-              if (int.tryParse(val) == null) return 'Enter valid age';
+              final age = int.tryParse(val);
+              if (age == null) return 'Enter valid age';
+              if (_dobController.text.isNotEmpty) {
+                final dob = DateFormat('dd/MM/yyyy').parse(_dobController.text);
+                final today = DateTime.now();
+                final calculatedAge = today.year - dob.year -
+                    ((today.month < dob.month ||
+                        (today.month == dob.month &&
+                            today.day < dob.day))
+                        ? 1
+                        : 0);
+                if ((calculatedAge - age).abs() > 1) {
+                  return 'Age does not match DOB';
+                }
+              }
               return null;
             },
-          ),
-          const SizedBox(height: 16),
-          GestureDetector(
             onTap: () async {
+              // Also offer date picker via age field tap
               final date = await showDatePicker(
                 context: context,
-                initialDate: DateTime.now(),
+                initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
                 firstDate: DateTime(1900),
                 lastDate: DateTime.now(),
               );
               if (date != null) {
                 _dobController.text = DateFormat('dd/MM/yyyy').format(date);
+                final today = DateTime.now();
+                final calculatedAge = today.year - date.year -
+                    ((today.month < date.month ||
+                        (today.month == date.month && today.day < date.day))
+                        ? 1
+                        : 0);
+                _ageController.text = calculatedAge.toString();
+              }
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          /// Date of Birth picker
+          GestureDetector(
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
+                firstDate: DateTime(1900),
+                lastDate: DateTime.now(),
+              );
+              if (date != null) {
+                _dobController.text = DateFormat('dd/MM/yyyy').format(date);
+                final today = DateTime.now();
+                final calculatedAge = today.year - date.year -
+                    ((today.month < date.month ||
+                        (today.month == date.month && today.day < date.day))
+                        ? 1
+                        : 0);
+                _ageController.text = calculatedAge.toString();
               }
             },
             child: AbsorbPointer(
@@ -324,6 +369,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ),
+
           const SizedBox(height: 24),
           _gradientButton('Next', () {
             if (_formKeyStep1.currentState!.validate()) {
@@ -338,6 +384,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+
 
   // Step 2: Scheme and Residence Details
   Widget _buildScreen2() {
@@ -550,7 +597,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _incomeController,
-            decoration: const InputDecoration(labelText: 'Annual Income'),
+            decoration: const InputDecoration(labelText: 'Annual Income(₹)'),
             keyboardType: TextInputType.number,
             validator: (val) {
               if (val == null || val.trim().isEmpty) return 'Required';
@@ -601,7 +648,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const Text('Congratulations!',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        const Text('You are eligible for 13 schemes.'),
+        const Text('You are eligible for many schemes.'),
         const SizedBox(height: 24),
         _gradientButton('Check Schemes', () {
           Navigator.of(context).pushAndRemoveUntil(

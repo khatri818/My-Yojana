@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart';
 import 'package:my_yojana/features/home/domain/use_cases/create_bookmark_usecase.dart';
 import 'package:my_yojana/features/home/domain/use_cases/delete_bookmark_usecase.dart';
@@ -63,7 +64,7 @@ class Injection {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     getIt.registerSingleton<FirebaseAuthService>(
-        FirebaseAuthServiceImpl(firebaseAuth: FirebaseAuth.instance));
+        FirebaseAuthServiceImpl(firebaseAuth: FirebaseAuth.instance, googleSignIn: GoogleSignIn()));
   }
 
   static Future<void> _initServicesAndUtils() async {

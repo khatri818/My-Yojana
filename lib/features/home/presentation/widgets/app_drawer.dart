@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:my_yojana/core/constant/storage_key.dart';
 import 'package:my_yojana/core/enum/status.dart';
 import 'package:my_yojana/features/user/presentation/pages/AboutUsPage.dart';
 import 'package:my_yojana/features/user/presentation/pages/ContactUsPage.dart';
 import 'package:my_yojana/features/user/presentation/pages/HelpPage.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../core/utils/app_utils.dart';
 import '../../../auth/presentation/manager/auth_manger.dart';
 import '../../../auth/presentation/pages/login_page.dart';
@@ -12,13 +15,39 @@ import '../../../user/presentation/pages/user_page.dart';
 import '../../../user/presentation/pages/settings_page.dart';
 
 class AppDrawer extends StatefulWidget {
+
   const AppDrawer({super.key});
+
 
   @override
   State<AppDrawer> createState() => _AppDrawerState();
+
 }
 
 class _AppDrawerState extends State<AppDrawer> {
+  String? _email;
+  String? _mobile;
+
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storage = LocalStorageImpl(prefs); // create manually
+
+    final email = await storage.read(StorageKey.email);
+    final mobile = await storage.read(StorageKey.mobile);
+
+    setState(() {
+      _email = email;
+      _mobile = mobile;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -70,7 +99,7 @@ class _AppDrawerState extends State<AppDrawer> {
                           style: const TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2575FC), // ✅ Updated initial color
+                            color: Color(0xFF2575FC),
                           ),
                         ),
                       ),
@@ -89,13 +118,32 @@ class _AppDrawerState extends State<AppDrawer> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              "My Profile",
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
+                            if (_email != null &&
+                                _email!.trim().isNotEmpty &&
+                                _email!.toLowerCase().trim() != 'null')
+                              Text(
+                                _email!.trim(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
                               ),
-                            ),
+                            if (_mobile != null &&
+                                _mobile!.trim().isNotEmpty &&
+                                _mobile!.toLowerCase().trim() != 'null')
+                              Text(
+                                _mobile!.trim(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -157,7 +205,6 @@ class _AppDrawerState extends State<AppDrawer> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  // 🎨 Top Icon / Illustration
                                   Container(
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
@@ -171,8 +218,6 @@ class _AppDrawerState extends State<AppDrawer> {
                                     ),
                                   ),
                                   const SizedBox(height: 20),
-
-                                  // 📝 Title
                                   const Text(
                                     'Log Out?',
                                     style: TextStyle(
@@ -182,8 +227,6 @@ class _AppDrawerState extends State<AppDrawer> {
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-
-                                  // 💬 Subtitle
                                   const Text(
                                     'Are you sure you want to log out of your account? You can always log back in later.',
                                     textAlign: TextAlign.center,
@@ -194,12 +237,9 @@ class _AppDrawerState extends State<AppDrawer> {
                                     ),
                                   ),
                                   const SizedBox(height: 24),
-
-                                  // ✅ Action Buttons
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                     children: [
-                                      // ❌ Cancel
                                       TextButton(
                                         style: TextButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -218,8 +258,6 @@ class _AppDrawerState extends State<AppDrawer> {
                                           ),
                                         ),
                                       ),
-
-                                      // ✅ Confirm Logout
                                       TextButton(
                                         style: TextButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -300,7 +338,7 @@ class _AppDrawerState extends State<AppDrawer> {
           leading: Icon(
             icon,
             size: 24,
-            color: iconColor ?? const Color(0xFF2575FC), // ✅ Default icon color
+            color: iconColor ?? const Color(0xFF2575FC),
           ),
           title: Text(
             label,

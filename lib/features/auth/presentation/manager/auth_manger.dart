@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../core/constant/storage_key.dart';
 import '../../../../core/model/form/user_session.dart';
 import '../../../../core/services/firebase_auth_service.dart';
@@ -23,6 +24,8 @@ class AuthManager with ChangeNotifier {
   final LoginUserUseCase _loginUserUseCase;
   final LogoutUseCase _logoutUseCase;
   final RegisterUserUseCase _registerUserUseCase;
+
+  bool isLoading = false;
 
 
   AuthManager(
@@ -165,6 +168,13 @@ class AuthManager with ChangeNotifier {
           final logged =
           await login(userIdToken: userIdToken, userUID: user.uid);
           if (logged) {
+
+            if (phoneNumber != null && phoneNumber!.isNotEmpty) {
+              await _localStorage.write(
+                SecureStorageItem(key: StorageKey.mobile, value: phoneNumber!),
+              );
+            }
+
             final isNewUser =
                 await _localStorage.readBool(StorageKey.isNewUser) ?? false;
 
@@ -180,6 +190,72 @@ class AuthManager with ChangeNotifier {
       onComplete: _resetVerificationState,
     );
   }
+
+  void _setLoading(bool value) {
+    isLoading = value;
+    notifyListeners();
+  }
+
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  Future<void> signInWithGoogle({
+    required BuildContext context,
+    required void Function(bool isNewUser) onVerified,
+  }) async {
+    _setLoading(true);
+    try {
+
+      if (await _googleSignIn.isSignedIn()) {
+        await _googleSignIn.disconnect();
+      }
+      await _googleSignIn.signOut();
+      await FirebaseAuth.instance.signOut();
+
+      final UserCredential? credential =
+      await _firebaseAuthService.signInWithGoogle();
+
+      if (credential == null || credential.user == null) {
+        AppAlert.showToast(message: "Google Sign-In cancelled.");
+        return;
+      }
+
+      final user = credential.user!;
+      final idToken = await user.getIdToken();
+
+      if (idToken == null) {
+        AppAlert.showToast(message: "Unable to fetch ID token.");
+        return;
+      }
+
+      _logUserDetails(user, credential.credential?.accessToken);
+
+      final logged = await login(userIdToken: idToken, userUID: user.uid);
+
+      if (logged) {
+
+        if (user.email != null && user.email!.isNotEmpty) {
+          await _localStorage.write(
+            SecureStorageItem(key: StorageKey.email, value: user.email!),
+          );
+        }
+
+        final isNewUser =
+            await _localStorage.readBool(StorageKey.isNewUser) ?? false;
+        onVerified(isNewUser);
+      } else {
+        AppAlert.showToast(message: "Login failed after Google Sign-In.");
+      }
+    } catch (e) {
+      LogUtility.error("Google Sign-In error: $e");
+      AppAlert.showToast(message: "Google Sign-In failed. Please try again.");
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+
+
+
 
   Future<void> _logUserDetails(User? user, String? accessToken) async {
     LogUtility.info('USER :: ${user?.uid}');
@@ -258,12 +334,15 @@ class AuthManager with ChangeNotifier {
         },
             (r) async {
           await _firebaseAuthService.logout();
+          await GoogleSignIn().signOut();
           AppAlert.showToast(message: r.message);
           return true;
         },
       ),
     );
   }
+
+
 
   Status _registerLoadingStatus = Status.init;
   Status get registerLoadingStatus => _registerLoadingStatus;

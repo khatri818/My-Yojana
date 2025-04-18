@@ -113,10 +113,23 @@ class _LoginOTPScreenState extends State<LoginOTPScreen> {
                 child: OtpTextField(
                   numberOfFields: 6,
                   fieldHeight: 50,
-                  fieldWidth: 45, // Reduced width to prevent overflow
-                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                  fieldWidth: 45,
+                  borderRadius: const BorderRadius.all(Radius.circular(14)),
+                  borderWidth: 1.8,
                   showFieldAsBox: true,
-                  textStyle: const TextStyle(color: Colors.black),
+                  filled: true,
+                  fillColor: const Color(0xFFF9FAFB), // subtle off-white background
+                  enabledBorderColor: const Color(0xFFE0E0E0),
+                  focusedBorderColor: const Color(0xFF4F44FF),
+                  disabledBorderColor: const Color(0xFFE0E0E0),
+                  cursorColor: const Color(0xFF4F44FF),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  margin: const EdgeInsets.symmetric(horizontal: 6.0),
+                  textStyle: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 18,
+                    letterSpacing: 1.5,
+                  ),
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onCodeChanged: (_) {},
                   onSubmit: (String verificationCode) {

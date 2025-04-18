@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 abstract class FirebaseAuthService {
   Future<void> sendOtp(
@@ -11,6 +12,8 @@ abstract class FirebaseAuthService {
   );
 
   Future<UserCredential> verifyAndLogin(String verificationId, String smsCode);
+
+  Future<UserCredential?> signInWithGoogle();
 
   User? getUser();
 
@@ -30,10 +33,13 @@ abstract class FirebaseAuthService {
 
 class FirebaseAuthServiceImpl implements FirebaseAuthService {
   final FirebaseAuth _firebaseAuth;
+  final GoogleSignIn _googleSignIn;
 
   FirebaseAuthServiceImpl({
     required FirebaseAuth firebaseAuth,
-  }) : _firebaseAuth = firebaseAuth;
+    required GoogleSignIn googleSignIn,
+  })  : _firebaseAuth = firebaseAuth,
+        _googleSignIn = googleSignIn;
 
   @override
   Future<void> sendOtp(
@@ -85,6 +91,25 @@ class FirebaseAuthServiceImpl implements FirebaseAuthService {
       codeAutoRetrievalTimeout: autoRetrievalTimeout,
       forceResendingToken: resendToken,
     );
+  }
+
+  @override
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null; // User cancelled the sign-in
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      return await _firebaseAuth.signInWithCredential(credential);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   @override
